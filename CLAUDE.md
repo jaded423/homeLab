@@ -18,7 +18,14 @@ This project documents the research, planning, and setup of an affordable but po
 
 ## Current Status
 
-**Phase**: Initial Research
+**Phase**: Research Complete - Ready for Hardware Purchasing
+
+**Recommended Build**: Budget-Conscious Starter ($2,200 total)
+- LLM Workstation with used RTX 3090 24GB ($1,350)
+- Beelink SER7 mini PC server ($700)
+- 2.5GbE networking ($150)
+
+See [docs/build-plan.md](docs/build-plan.md) for complete specifications and purchasing guide.
 
 ## Quick Reference
 
