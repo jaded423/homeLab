@@ -5,8 +5,9 @@
 This project documents the research, planning, and setup of an affordable but powerful home laboratory environment designed to run local LLMs with medium context sizes.
 
 **📚 Detailed Documentation**: See the `docs/` directory:
-- **[research.md](docs/research.md)** - Hardware research and product comparisons
-- **[build-plan.md](docs/build-plan.md)** - Build plan with costs and steps
+- **[llm-homelab-research-2025.md](docs/llm-homelab-research-2025.md)** - Comprehensive hardware research
+- **[build-plan.md](docs/build-plan.md)** - Build plan with costs and implementation steps
+- **[linux-os-comparison.md](docs/linux-os-comparison.md)** - Linux OS options for server (Proxmox, Ubuntu, etc.)
 - **[changelog.md](docs/changelog.md)** - Version history
 
 ## Project Goals
