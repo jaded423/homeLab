@@ -63,7 +63,6 @@ ip addr show
 - Build guide: `docs/build-plan.md`
 - OS comparison: `docs/linux-os-comparison.md`
 - Network setup: `docs/twingate-pihole-setup.md`
-- Pi-hole setup: `docs/pihole-setup.md`
 
 ## Documentation Structure
 
@@ -76,8 +75,8 @@ ip addr show
 
 ### Configuration Guides
 - **[linux-os-comparison.md](docs/linux-os-comparison.md)** - OS selection analysis (678 lines)
-- **[pihole-setup.md](docs/pihole-setup.md)** - Ad blocking DNS setup with DNS-over-TLS (472 lines)
-- **[twingate-pihole-setup.md](docs/twingate-pihole-setup.md)** - Secure remote access for Pi-hole (472 lines)
+- **[pihole-setup.md](docs/pihole-setup.md)** - Ad blocking DNS setup (472 lines)
+- **[twingate-pihole-setup.md](docs/twingate-pihole-setup.md)** - Secure remote access (472 lines)
 
 ### Meta Documentation
 - **[changelog.md](docs/changelog.md)** - Complete version history
@@ -104,6 +103,34 @@ ip addr show
 **Last Updated**: 2025-11-14
 
 **Full changelog**: [docs/changelog.md](docs/changelog.md)
+
+### Recent Updates
+- 2025-11-14 - [MINOR] Added Pi-hole documentation and Twingate remote access setup
+- 2025-11-14 - [MINOR] Documentation optimized and restructured
+- 2025-11-07 - [MAJOR] Project initialized with comprehensive research
+
+### 2025-11-14 - Pi-hole Documentation and Twingate Integration
+
+**Changes:**
+- Created comprehensive Pi-hole setup documentation (`docs/pihole-setup.md`)
+- Created Twingate remote access setup guide (`docs/twingate-pihole-setup.md`)
+- Investigated and documented existing Pi-hole DNS-over-TLS configuration
+- Updated global homelab documentation with Pi-hole IP address (192.168.1.191)
+- Discovered and documented dnsdist DoT configuration on port 8853
+
+**Impact:**
+- Complete documentation of existing Pi-hole setup with DNS-over-TLS
+- Clear guide for setting up Twingate resources for remote Pi-hole access
+- Identified DNS record mismatch issue (pihole.jadedviber.com → 35.147.140.96 vs actual home IP)
+- Enables secure remote DNS and ad-blocking via Twingate Zero Trust network
+- Future-ready for Pi 5 migration with documented setup steps
+
+**Files created:**
+- `docs/pihole-setup.md` - Complete Pi-hole configuration, DoT setup, troubleshooting (472 lines)
+- `docs/twingate-pihole-setup.md` - Step-by-step Twingate resource setup guide (472 lines)
+
+**Files modified:**
+- `~/.claude/docs/homelab.md` - Added Pi-hole IP (192.168.1.191) to infrastructure overview
 
 ---
 
