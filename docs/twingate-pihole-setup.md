@@ -470,3 +470,232 @@ You'll know it's working when:
 - [Pi-hole Setup](pihole-setup.md)
 - [Twingate on CachyOS Server](~/.claude/docs/homelab.md#3-twingate-connector)
 - [Home Lab Overview](../CLAUDE.md)
+
+---
+
+## Proxmox Headless Access (Service Account)
+
+**Added**: December 1, 2025
+
+For server-to-server communication (like Proxmox accessing Mac), use a Twingate Service Account to avoid browser re-authentication.
+
+### Setup Service Account
+
+1. **Create Service Account** in Twingate Admin:
+   - Go to **Team** → **Service Accounts**
+   - Click **Create Service Account**
+   - Name:  (or similar)
+   - Generate a **Service Key** (downloads as JSON)
+
+2. **Assign Resources**:
+   - Assign the resources the service account needs (e.g., )
+
+3. **Install on Proxmox**:
+   ```bash
+   # Save the service key
+   cat > /etc/twingate/service_key.json << 'KEYEOF'
+   {
+     "version": "1",
+     "network": "jaded423.twingate.com",
+     "service_account_id": "<your-id>",
+     "private_key": "-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----",
+     "key_id": "<your-key-id>",
+     "expires_at": "2026-12-01T16:41:29+00:00",
+     "login_path": "/api/v4/headless/login"
+   }
+   KEYEOF
+
+   # Secure the file
+   chmod 600 /etc/twingate/service_key.json
+
+   # Configure Twingate for headless mode
+   twingate setup --headless /etc/twingate/service_key.json
+
+   # Start Twingate
+   twingate start
+   ```
+
+4. **Verify**:
+   ```bash
+   twingate status    # Should show: online
+   twingate resources # Should list available resources
+   ```
+
+### Current Service Accounts
+
+| Service Account | Location | Purpose | Expires |
+|-----------------|----------|---------|---------|
+| prox-book5-service | Proxmox (192.168.2.250) | SSH to Mac, access home resources | Dec 1, 2026 |
+
+### Benefits
+
+- No browser authentication required
+- Survives reboots automatically
+- Perfect for server-to-server access
+- Audit trail in Twingate admin
+
+### SSH to Mac from Proxmox
+
+```bash
+ssh joshuabrown@mac-ssh.local
+```
+
+Works from anywhere - Proxmox uses Twingate service account to reach Mac via its connector.
+
+---
+
+## Mac Remote Network Setup
+
+**Added**: December 1, 2025
+
+To SSH into your Mac from anywhere (even when Mac changes networks):
+
+### Architecture
+
+```
+Mac (work/home/anywhere)
+├── Twingate Client (access OUT)
+└── Twingate Connector in Docker (access IN)
+    └── Resource: mac-ssh → host.docker.internal:22
+
+Proxmox (home)
+└── Twingate Client (service account)
+    └── Can reach mac-ssh.local from anywhere
+```
+
+### Setup
+
+1. **Create Mac-Remote Network** in Twingate Admin
+2. **Deploy Connector on Mac** (Docker):
+   ```bash
+   docker run -d --restart=unless-stopped \
+     --name twingate-mac-ssh \
+     -e TWINGATE_NETWORK="jaded423" \
+     -e TWINGATE_ACCESS_TOKEN="<token>" \
+     -e TWINGATE_REFRESH_TOKEN="<token>" \
+     twingate/connector:1
+   ```
+
+3. **Create Resource**:
+   - Name: 
+   - Address:  (routes to Mac host from Docker)
+   - Port:  (TCP)
+   - Network: Mac-Remote
+   - Alias: 
+
+4. **Enable SSH on Mac**:
+   - System Settings → General → Sharing → Remote Login → On
+
+5. **Add SSH key** to Mac's 
+
+### Key Detail: host.docker.internal
+
+Since the connector runs in Docker with bridge networking,  points to the container, not the Mac. Use  instead - Docker's special hostname that routes to the host machine.
+
+
+---
+
+## Proxmox Headless Access (Service Account)
+
+**Added**: December 1, 2025
+
+For server-to-server communication (like Proxmox accessing Mac), use a Twingate Service Account to avoid browser re-authentication.
+
+### Setup Service Account
+
+1. **Create Service Account** in Twingate Admin:
+   - Go to **Team** → **Service Accounts**
+   - Click **Create Service Account**
+   - Name: `prox-book5-service` (or similar)
+   - Generate a **Service Key** (downloads as JSON)
+
+2. **Assign Resources**:
+   - Assign the resources the service account needs (e.g., `mac-ssh`)
+
+3. **Install on Proxmox**:
+   ```bash
+   # Save the service key JSON to this file
+   nano /etc/twingate/service_key.json
+
+   # Secure the file
+   chmod 600 /etc/twingate/service_key.json
+
+   # Configure Twingate for headless mode
+   twingate setup --headless /etc/twingate/service_key.json
+
+   # Start Twingate
+   twingate start
+   ```
+
+4. **Verify**:
+   ```bash
+   twingate status    # Should show: online
+   twingate resources # Should list available resources
+   ```
+
+### Current Service Accounts
+
+| Service Account | Location | Purpose | Expires |
+|-----------------|----------|---------|---------|
+| prox-book5-service | Proxmox (192.168.2.250) | SSH to Mac, access home resources | Dec 1, 2026 |
+
+### Benefits
+
+- No browser authentication required
+- Survives reboots automatically
+- Perfect for server-to-server access
+- Audit trail in Twingate admin
+
+### SSH to Mac from Proxmox
+
+```bash
+ssh joshuabrown@mac-ssh.local
+```
+
+Works from anywhere - Proxmox uses Twingate service account to reach Mac via its connector.
+
+---
+
+## Mac Remote Network Setup
+
+**Added**: December 1, 2025
+
+To SSH into your Mac from anywhere (even when Mac changes networks):
+
+### Architecture
+
+```
+Mac (work/home/anywhere)
+├── Twingate Client (access OUT)
+└── Twingate Connector in Docker (access IN)
+    └── Resource: mac-ssh → host.docker.internal:22
+
+Proxmox (home)
+└── Twingate Client (service account)
+    └── Can reach mac-ssh.local from anywhere
+```
+
+### Setup
+
+1. **Create Mac-Remote Network** in Twingate Admin
+
+2. **Deploy Connector on Mac** (Docker):
+   - Go to Networks → Mac-Remote → Deploy Connector
+   - Choose Docker and follow the instructions
+   - The container should run with `--restart=unless-stopped`
+
+3. **Create Resource**:
+   - Name: `mac-ssh`
+   - Address: `host.docker.internal` (routes to Mac host from Docker)
+   - Port: `22` (TCP)
+   - Network: Mac-Remote
+   - Alias: `mac-ssh.local`
+
+4. **Enable SSH on Mac**:
+   - System Settings → General → Sharing → Remote Login → On
+
+5. **Add SSH key** to Mac's `~/.ssh/authorized_keys`
+
+### Key Detail: host.docker.internal
+
+Since the connector runs in Docker with bridge networking, `127.0.0.1` points to the container, not the Mac. Use `host.docker.internal` instead - Docker's special hostname that routes to the host machine.
