@@ -13,8 +13,8 @@
 
 This project documents the research, planning, and setup of an affordable but powerful home laboratory environment designed to run local LLMs with medium context sizes.
 
-**Project Type**: Infrastructure / Hardware Research  
-**Status**: Proxmox Running - VMs Deployed  
+**Project Type**: Infrastructure / Hardware Research
+**Status**: Proxmox Running - VMs Deployed
 **Budget**: $2,200 (Budget-Conscious Starter Build)
 
 ## Project Goals
@@ -29,15 +29,16 @@ This project documents the research, planning, and setup of an affordable but po
 **Phase**: Infrastructure Deployed ✅
 
 ### Completed
-- ✅ Proxmox installed and running on laptop (192.168.2.250)
+- ✅ Proxmox installed and running on laptop - `prox-book5` (192.168.2.250)
 - ✅ 3 VMs configured (omarchy-desktop, ubuntu-desktop, ubuntu-server)
 - ✅ Pi-hole DNS running on Raspberry Pi
 - ✅ Twingate zero-trust networking configured
-- ✅ Git repos cloned to Proxmox
+- ✅ Twingate service account for headless server access (expires Dec 2026)
+- ✅ Git repos cloned to Proxmox (`~/repos/`)
 - ✅ SSH access to Mac via Twingate (works from any network)
 
 ### In Progress
-- 🔄 Second Proxmox node arriving (more RAM)
+- 🔄 Second Proxmox node `prox-tower` arriving (192.168.2.249)
 - 🔄 Cross-backup between Proxmox nodes planned
 
 ### Upcoming
@@ -48,13 +49,14 @@ This project documents the research, planning, and setup of an affordable but po
 
 ### Network: 192.168.2.0/24
 
-| Device | IP | Services |
-|--------|-----|----------|
-| **Router** | 192.168.2.1 | Gateway (TP-Link) |
-| **Proxmox Host** | 192.168.2.250 | proxmox-jade.local, SSH |
-| **Pi-hole Pi** | 192.168.2.131 | DNS :53, Pi-hole :80/443, MagicMirror :8080, Homarr :7575 |
+| Device | IP | Hostname | Services |
+|--------|-----|----------|----------|
+| **Router** | 192.168.2.1 | — | Gateway (TP-Link) |
+| **Proxmox Node 1** | 192.168.2.250 | prox-book5 | VMs, SSH, Twingate Client |
+| **Proxmox Node 2** | 192.168.2.249 | prox-tower | (planned) |
+| **Pi-hole Pi** | 192.168.2.131 | pi.hole | DNS :53, Pi-hole :80/443, MagicMirror :8080, Homarr :7575 |
 
-### Proxmox VMs
+### Proxmox VMs (on prox-book5)
 
 | VMID | Name | IP | Status |
 |------|------|-----|--------|
@@ -62,7 +64,9 @@ This project documents the research, planning, and setup of an affordable but po
 | 101 | ubuntu-desktop | — | Stopped |
 | 102 | ubuntu-server | 192.168.2.126 | Running (Twingate connector in Docker) |
 
-### Twingate Remote Access
+### Twingate Configuration
+
+#### Remote Networks & Connectors
 
 | Network | Connector Location | Purpose |
 |---------|-------------------|---------|
@@ -70,6 +74,21 @@ This project documents the research, planning, and setup of an affordable but po
 | Home | Pi (192.168.2.131) | Redundant home access |
 | Mac-Remote | Mac (Docker) | SSH into Mac from anywhere |
 | Work | Work PC | Access to work resources |
+
+#### Service Accounts
+
+| Account | Location | Purpose | Expires |
+|---------|----------|---------|---------|
+| prox-book5-service | Proxmox (192.168.2.250) | Headless access to resources | Dec 1, 2026 |
+
+Service key location: `/etc/twingate/service_key.json`
+
+#### Key Resources
+
+| Resource | Address | Alias | Network |
+|----------|---------|-------|---------|
+| mac-ssh | host.docker.internal:22 | mac-ssh.local | Mac-Remote |
+| homeLab | 192.168.2.250 | — | Home |
 
 **To SSH into Mac from anywhere:**
 ```bash
@@ -87,10 +106,9 @@ qm stop 100                      # Stop VM 100
 qm snapshot 100 snap-name        # Create snapshot
 qm rollback 100 snap-name        # Rollback to snapshot
 
-# Twingate
+# Twingate (on Proxmox - headless mode)
 twingate status                  # Check connection status
 twingate resources               # List available resources
-twingate auth <resource>         # Authenticate to resource
 
 # Check GPU availability (once built)
 nvidia-smi
@@ -104,9 +122,10 @@ ip addr show
 
 ### Important Paths
 
-**On Proxmox (192.168.2.250):**
+**On Proxmox (prox-book5 @ 192.168.2.250):**
 - Git repos: `~/repos/homeLab`, `~/repos/claudeGlobal`
 - VM configs: `/etc/pve/qemu-server/`
+- Twingate service key: `/etc/twingate/service_key.json`
 
 **On Mac:**
 - Projects: `~/projects/homeLab`
@@ -137,7 +156,7 @@ ssh root@192.168.2.126    # ubuntu-server
 ### Configuration Guides
 - **[linux-os-comparison.md](docs/linux-os-comparison.md)** - OS selection analysis
 - **[pihole-setup.md](docs/pihole-setup.md)** - Ad blocking DNS setup with DNS-over-TLS
-- **[twingate-pihole-setup.md](docs/twingate-pihole-setup.md)** - Secure remote access for Pi-hole
+- **[twingate-pihole-setup.md](docs/twingate-pihole-setup.md)** - Secure remote access, service accounts, Mac remote setup
 
 ### Meta Documentation
 - **[changelog.md](docs/changelog.md)** - Complete version history
@@ -146,9 +165,9 @@ ssh root@192.168.2.126    # ubuntu-server
 ## Hardware
 
 ### Current Infrastructure
-- **Proxmox Host**: Laptop at 192.168.2.250 (temporary until 2nd PC arrives)
+- **Proxmox Node 1 (prox-book5)**: Laptop at 192.168.2.250
+- **Proxmox Node 2 (prox-tower)**: Ordered from eBay, arriving soon (192.168.2.249)
 - **Raspberry Pi**: Pi-hole, MagicMirror, Homarr, Twingate connector
-- **Second Proxmox Node**: Ordered from eBay (more RAM) - arriving soon
 
 ### Planned Build: Budget-Conscious Starter ($2,200 total)
 
@@ -169,10 +188,11 @@ ssh root@192.168.2.126    # ubuntu-server
 
 ## Version History
 
-**Current Version**: v1.1.0  
+**Current Version**: v1.2.0
 **Last Updated**: 2025-12-01
 
 ### Recent Changes
+- v1.2.0 (2025-12-01): Renamed Proxmox to prox-book5, added service account docs, added prox-tower planning
 - v1.1.0 (2025-12-01): Added network cheat sheet, Proxmox/Twingate setup docs
 - v1.0.1 (2025-11-14): Initial documentation structure
 
