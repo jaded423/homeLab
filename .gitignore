@@ -1,0 +1,23 @@
+# macOS
+.DS_Store
+
+# Editor/IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Local notes and test files
+*.local
+*.test
+scratch/
+
+# Ansible
+*.retry
+
+# Secrets (should never be committed)
+*secret*
+*password*
+*.pem
+*.key
