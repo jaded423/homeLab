@@ -36,6 +36,9 @@ This project documents the research, planning, and setup of an affordable but po
 - ✅ Twingate service account for headless server access (expires Dec 2026)
 - ✅ Git repos cloned to Proxmox (`~/repos/`)
 - ✅ SSH access to Mac via Twingate (works from any network)
+- ✅ Homelable topology visualizer in CT 103 (192.168.68.61:3000) with MCP server on :8001
+
+> Note: Network IPs in the table below pre-date the Feb-2026 router migration (now 192.168.68.0/22). Authoritative current state lives in `~/.claude/CLAUDE.md` "Home Lab Quick Reference".
 
 ### In Progress
 - 🔄 Second Proxmox node `prox-tower` arriving (192.168.2.249)

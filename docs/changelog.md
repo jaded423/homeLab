@@ -359,3 +359,67 @@ autossh -M 0 -L 5900:localhost:5900 jaded@192.168.1.228
 **Security:** ✅ SSH tunnel only (no network exposure)
 **Performance:** ✅ Smooth at 30 FPS with GPU acceleration
 **Last Tested:** 2025-11-12
+
+## 2026-05-06 - Added Homelable Visualizer LXC (CT 103) on book5
+
+**What changed:**
+- Created LXC 103 `homelable` on prox-book5 via community-scripts ProxmoxVE installer
+  - Debian 13 unprivileged, 2 vCPU / 2 GB RAM / 8 GB disk on `local-zfs-book5`
+  - Bridge `vmbr1`, IP `192.168.68.61` (DHCP)
+  - Native install (Python 3.13 + uv venv + Node 20 + Caddy frontend), no Docker
+- Configured `SCANNER_RANGES=["192.168.68.0/22"]` in `/opt/homelable/backend/.env`
+- Added `homelable-mcp.service` (uvicorn on 0.0.0.0:8001) for AI integration
+  - Generated `MCP_API_KEY` and `MCP_SERVICE_KEY`, stored in `/opt/homelable/mcp/.env` and backend `.env`
+  - Wired into `~/.claude.json` as MCP server `homelable` (transport: `http`)
+- User added Twingate resource for 192.168.68.61 (all ports) so it's reachable from Mac via tunnel
+
+**Why:**
+- Wanted a visual topology + live status overview of the homelab
+- MCP integration lets Claude Code read topology, trigger scans, add/edit nodes during sessions
+
+**Files modified:**
+- `/etc/pve/lxc/103.conf` (book5) — new container
+- `/etc/systemd/system/homelable.service` (CT 103) — backend systemd unit (created by installer)
+- `/etc/systemd/system/homelable-mcp.service` (CT 103) — MCP server systemd unit (created manually)
+- `/opt/homelable/backend/.env` (CT 103) — `SCANNER_RANGES` and `MCP_SERVICE_KEY`
+- `/opt/homelable/mcp/.env` (CT 103) — MCP keys + `BACKEND_URL=http://localhost:8000`
+- `~/.claude.json` (Mac) — added `homelable` MCP server entry
+- `~/projects/homeLab/CLAUDE.md` — added CT 103 to current state
+- `~/.claude/CLAUDE.md` — added CT 103 to Home Lab Quick Reference
+- `~/.claude/docs/projects.md` — bumped Home Lab Last Updated, added Homelable to services
+
+**Technical notes:**
+- **Bridge gotcha:** community-scripts default is `vmbr0`. On book5 vmbr0 is inactive (post Feb-2026 router migration; vmbr1 is the 2.5GbE primary, already documented in global CLAUDE.md). First install attempt failed with "No IP assigned to CT 103 after 60 attempts". Fix: destroy + re-run with `var_brg=vmbr1` env var. Also pin CT ID with `var_ctid=103` (default would have picked 101 since 100/102 are used).
+- **MCP transport:** Homelable's README says `--transport sse`, but the server uses `StreamableHTTPSessionManager`. Claude Code needs `type: "http"` (streamable-http), not `type: "sse"`. README is stale — verified via `claude mcp list` showing "Failed to connect" with `sse` and "Connected" with `http`.
+- **Skipped host apt upgrade:** installer prompts to run `apt upgrade` on the Proxmox host — declined ([2] Ignore). Out of scope for one LXC install.
+- **MCP server is native (not Docker):** community-scripts installer skips MCP entirely. Set up a venv at `/opt/homelable/mcp/.venv` and a separate systemd unit, mirroring the existing `homelable.service` pattern.
+
+---
+
+## 2026-05-06 - Populated Homelable Canvas via MCP
+
+**What changed:**
+- Seeded the Homelable canvas with 17 nodes / 13 edges / 4 parent links via MCP from a fresh Claude Code session
+- Triggered first nmap scan (192.168.68.0/22) — discovered 26 devices
+  - 10 hidden as duplicates of nodes already created
+  - 4 approved with confident labels: TP-Link AP (192.168.71.250), PlayStation (.51), Nintendo Switch (.68), Google device (.56)
+  - 2 hidden as randomized/transient MACs (visiting phones)
+  - 10 left pending for user triage (mostly Espressif ESP32 + TP-Link smart-home gear)
+- Created topology: gateway (192.168.68.1) at root → both Proxmox hosts, Pi-hole, Mac, IoT, mobile devices
+- Set parent_id on VM/LXC nodes so they nest visually under their Proxmox host
+
+**Why:**
+- User wanted to see Homelable in action with their actual network — a fresh install ships with a demo canvas (Freebox Ultra / OpnSense / NAS-01 / etc.) which had been cleared
+- Combined manual node creation from documented infrastructure with nmap-driven discovery for unknown devices
+
+**Files modified:**
+- (None on Mac — all changes via MCP to `/opt/homelable/data/homelab.db` on CT 103)
+
+**Technical notes:**
+- **Gateway and second AP same OUI:** gateway MAC `8c:86:dd:e8:65:8a` (.68.1) and `8c:86:dd:e8:c2:ea` (.71.250) — adjacent MACs, both TP-Link → almost certainly a mesh setup, primary router + AP/satellite. The .71.250 lives in the same /22 broadcast domain.
+- **CT 102 trans IP:** 192.168.68.65 (was previously undocumented in network sheets).
+- **OUI patterns on the network:** 6× Espressif (ESP32-based custom IoT — Tasmota/ESPHome/Shelly territory), 4× TP-Link (Tapo/Kasa devices), 1× Earda (smart switch/dimmer brand), plus consoles + Chromecast/Nest.
+- **Approval payload format:** `approve_device` only takes `id`, `label`, `type`. To set `hostname`/`ip`/`status` afterward, use `update_node`. (We didn't need to since the discovered IP is auto-applied by approve.)
+- **Edge defaults:** modeled wifi devices as connecting directly to the gateway (logical topology), not through the AP — Homelable canvas is meant to be a logical map, not a physical L2 trace.
+
+---
