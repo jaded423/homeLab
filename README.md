@@ -159,15 +159,6 @@ Same approach behind everything at [jadedviber.com](https://jadedviber.com).
 
 ---
 
-## 💀 Blame my existence on
-
-- [**@theNetworkChuck**](https://github.com/theNetworkChuck) — entire YouTube catalogue. Tailscale, Twingate, Pi-hole, Proxmox, homelab discipline. Patient zero for this stack
-- [**@christianlempa**](https://github.com/ChristianLempa) — documentation discipline. The "boilerplates" + lab-documentation patterns shaped how this repo is laid out
-- [**Wolfgang's Channel**](https://www.youtube.com/@WolfgangsChannel) — power-efficient homelab gospel. Made me think in idle-watts before throughput
-- [**Jeff Geerling**](https://github.com/geerlingguy) — Pi + Ansible content that took the on-ramp from "scary" to "obvious"
-
----
-
 ## 🔗 Resources
 
 - Lab status page on my site: [jadedviber.com/homelab](https://jadedviber.com/homelab.html)
