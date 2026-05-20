@@ -416,7 +416,7 @@ autossh -M 0 -L 5900:localhost:5900 jaded@192.168.1.228
 - (None on Mac — all changes via MCP to `/opt/homelable/data/homelab.db` on CT 103)
 
 **Technical notes:**
-- **Gateway and second AP same OUI:** gateway MAC `8c:86:dd:e8:65:8a` (.68.1) and `8c:86:dd:e8:c2:ea` (.71.250) — adjacent MACs, both TP-Link → almost certainly a mesh setup, primary router + AP/satellite. The .71.250 lives in the same /22 broadcast domain.
+- **Gateway and second AP same OUI:** gateway MAC `XX:XX:XX:XX:XX:XX` (.68.1) and `XX:XX:XX:XX:XX:XX` (.71.250) — adjacent MACs, both with the same TP-Link OUI prefix → almost certainly a mesh setup, primary router + AP/satellite. The .71.250 lives in the same /22 broadcast domain.
 - **CT 102 trans IP:** 192.168.68.65 (was previously undocumented in network sheets).
 - **OUI patterns on the network:** 6× Espressif (ESP32-based custom IoT — Tasmota/ESPHome/Shelly territory), 4× TP-Link (Tapo/Kasa devices), 1× Earda (smart switch/dimmer brand), plus consoles + Chromecast/Nest.
 - **Approval payload format:** `approve_device` only takes `id`, `label`, `type`. To set `hostname`/`ip`/`status` afterward, use `update_node`. (We didn't need to since the discovered IP is auto-applied by approve.)

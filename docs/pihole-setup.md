@@ -181,7 +181,7 @@ Actual home public IP → 68.203.132.146
 
 ### Twingate Admin Console
 
-**URL**: https://jaded423.twingate.com
+**URL**: https://your-org.twingate.com
 **Connector**: Running on CachyOS server (192.168.1.228)
 
 ---

@@ -25,7 +25,7 @@ This guide sets up Pi-hole as a Twingate resource, allowing:
 - SSL certificates installed and valid
 
 ✅ **You Need:**
-- Twingate Admin Console access: https://jaded423.twingate.com
+- Twingate Admin Console access: https://your-org.twingate.com
 - Twingate app installed on phone/remote devices
 
 ---
@@ -34,7 +34,7 @@ This guide sets up Pi-hole as a Twingate resource, allowing:
 
 ### Log into Twingate Admin Console
 
-**URL**: https://jaded423.twingate.com
+**URL**: https://your-org.twingate.com
 
 ### Create Resources
 
@@ -279,7 +279,7 @@ docker logs twingate-connector -f
 ```
 
 **Verify in Admin Console:**
-- https://jaded423.twingate.com
+- https://your-org.twingate.com
 - Connectors → Should show green/online
 
 ---
@@ -496,7 +496,7 @@ For server-to-server communication (like Proxmox accessing Mac), use a Twingate 
    cat > /etc/twingate/service_key.json << 'KEYEOF'
    {
      "version": "1",
-     "network": "jaded423.twingate.com",
+     "network": "your-org.twingate.com",
      "service_account_id": "<your-id>",
      "private_key": "-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----",
      "key_id": "<your-key-id>",
