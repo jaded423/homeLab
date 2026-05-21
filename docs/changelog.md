@@ -1,5 +1,88 @@
 # HomeLab Project Changelog
 
+## 2026-05-20 → 2026-05-21 - Home Assistant deployed on tower (VM 112) with porch cam watchdog
+
+### Outcome
+- HA OS 17.3 running on tower as **VM 112** at **192.168.68.111** (DHCP reservation for MAC `bc:24:11:94:b8:9a`)
+- Replaces the IFTTT-based porch cam watchdog (Hubspace plug control was the gap — IFTTT has no Hubspace service, only Tapo)
+- Tower watchdog migration is deferred (HA on tower can't watch tower; see Follow-up)
+
+### Why on tower instead of book5
+- First attempt was on book5 as VM 111. Book5 hung mid-deploy from userspace OOM (VM 100 omarchy still at 10GB, HAOS first-boot I/O storm pushed it over). ICMP answered, sshd/pveproxy wedged, required physical power-cycle (no remote access).
+- Moved to tower. Used VMID 112 because the partial book5 VM 111 record is cluster-wide locked until book5 is recovered and `qm destroy 111` runs.
+- Saved memories: `book5-oom-during-vm-deploy.md`, `tower-hang-kernel-pin-not-root-cause.md`, `ha-book5-watchdog-plan.md`.
+
+### Infrastructure changes on tower
+- New ZFS dataset `media-pool/vm-disks` → registered as Proxmox storage `media-pool-vm` (zfspool, images+rootdir). Chose this over `local-zfs-tower` (82% full → would push to 91% with HA disk). media-pool already has precedent for non-media datasets (`media-pool/ollama`).
+- VM 101 ubuntu-server **trimmed from 64GB → 36GB RAM** via virtio_balloon. Module wasn't loaded in the guest (Proxmox set ballooning target but guest ignored it); loaded with `modprobe virtio_balloon` + persisted via `/etc/modules-load.d/virtio_balloon.conf`. Actual working set in VM 101 was ~7.6GB so 36GB is still 4x headroom.
+- VM 112 spec: 4GB RAM, 32GB disk on `media-pool-vm`, q35 machine type, OVMF UEFI **without** pre-enrolled MS keys (`pre-enrolled-keys=0`). Tried SeaBIOS first to skip OVMF debugging — HAOS image is UEFI-only, doesn't boot under SeaBIOS. SB-disabled OVMF works.
+
+### Integrations deployed inside HA
+- **HACS** (community store) via SSH addon (Advanced SSH & Web Terminal). Addon required `username: root` because we enabled SFTP — that's a hard requirement of the addon, not a choice.
+- **Hubspace** (`jdeath/Hubspace-Homeassistant`, in HACS default repos now). Discovered 6 devices including the dual-outlet outdoor plug HPPA52CWBA023 ("Lights" device, Outside area). Outlet 2 = porch camera = `switch.lights_outlet_2` (friendly name "Porch Camera"). Note: entity_id is generated from device+outlet number, not the friendly name — renaming via UI doesn't change the entity_id, integration regenerates it on reload.
+- **Frigate** (blakeblackshear, in HACS default repos). Created 4 devices (Frigate server + 3 cams: Tapo Porch, Tapo 360 Living Room, Plate Zone) but ZERO entities until MQTT was wired up.
+- **MQTT**. The non-obvious gotcha: Frigate's HA integration is a discovery/topic listener — without MQTT pointing at Frigate's broker (mosquitto on VM 101 at 192.168.68.101:1883, anonymous), the Frigate devices stay empty. First attempt accidentally picked the "Mosquitto Mqtt Broker app" option which would install HAOS's own bundled broker (separate from VM 101's, would not see Frigate's topics). Removed that, re-added MQTT with "Manually enter broker details" → 192.168.68.101:1883, blank user/pass. Entity count jumped from ~20 (Hubspace + a few HA core) to 118 within seconds.
+
+### Porch cam watchdog automation
+- ID `porch_cam_watchdog`, friendly name "Porch cam offline → power cycle plug"
+- Trigger: `camera.tapo_porch` state = `unavailable` for 2 minutes
+- Action: `switch.lights_outlet_2` off → 10s delay → on → TTS to `media_player.family_room_speaker` (Google Nest Mini, auto-discovered by Google Cast integration)
+- Mode: single
+- Created via REST API POST to `/api/config/automation/config/porch_cam_watchdog`, then `services/automation/reload`. Verified plug toggles cleanly (off→on tested live during creation — actually power-cycled the cam, came back in ~30s).
+
+### Access plumbing
+- Long-lived access token created in HA → stored at `tower:/root/ha-emergency-kit/ha-token-claude.txt` (perms 600)
+- HA emergency-kit backup file (the encryption key for HA backups) copied to `tower:/root/ha-emergency-kit/` and `ubuntu:~/ha-emergency-kit/` (perms 600 each). Mac copy deleted by user. 1Password also has it.
+- Mac SSH config: added `Host ha` block with `ProxyJump tower` (Twingate intercepts 192.168.68.0/22 from Mac, same workaround as `ssh ubuntu`). `ssh ha` → root@HAOS SSH addon container.
+- Twingate resource `homeassistant` (alias `ha.lab`) created pointing at 192.168.68.65, needs updating to 192.168.68.111 (IP moved when we set the DHCP reservation).
+
+### Issues hit and resolved
+- **DNS dead on book5** at start of the deploy: `/etc/resolv.conf` listed only Twingate's 100.95.0.x resolvers, which were unresponsive. Fixed in a parallel session by repointing sdwan0's NM connection at pihole (see 2026-05-20 sister entry). `network-health-monitor.sh` patched to also probe DNS — previously logged "green" through the outage because it only checked ICMP+socket+systemctl.
+- **VM 112 boot looked black-screen at first**. Screen dumps showed `\0`-only pixels which I mistook for OVMF hanging. Actually HAOS was booting normally; first-boot Supervisor container pulls take 5-15min and the screen sits on "Waiting for the Home Assistant CLI to be ready" for most of it. Got fooled twice (book5 + tower) before checking the screen content properly.
+- **VM 112 IP drifted from .65 → .67 → .111** as we added DHCP reservation. HAOS internal "reboot" only restarts containers, not the OS — had to `qm shutdown 112 && qm start 112` to force a fresh DHCP lease grab.
+
+### Follow-up
+- **HA-book5 watchdog still pending.** Need a second small HA (2GB/32GB, Tapo integration only) on book5 to watch tower. Plan saved at `~/.claude/projects/-Users-j-projects-homeLab/memory/ha-book5-watchdog-plan.md`. Blocked on book5 being healthy (currently hung from this incident) + VM 100 trim to 6GB.
+- **Retire IFTTT applets** (`tower_plug_off`, `pc_plug_off`, etc.) once HA-book5 is up — Tapo integration in HA replaces them all natively.
+- **Pi1 off-site watcher** (~50 lines of Python) as belt-and-suspenders for "both home nodes down" scenarios. Defer until HA-book5 done.
+- **MQTT auth.** Currently anonymous on mosquitto. Fine on LAN but worth locking down with a user/pass. Need to update Frigate + HA MQTT integration in sync.
+- **Hubspace entity_id stability.** Renames via UI don't stick — integration regenerates on reload. If we depend on these in automations, document the entity_ids that exist post-regeneration rather than relying on friendly-name-derived ids.
+
+## 2026-05-20 - book5 DNS broken / sdwan0 swapped to pihole
+
+### Incident
+- `ping github.com` on book5 failed with "Temporary failure in name resolution"
+- Direct queries to public resolvers (8.8.8.8) worked; only the configured resolvers failed
+- `/etc/resolv.conf` listed `100.95.0.251-254` — Twingate's internal DNS, supplied via NM connection `sdwan0` (ipv4.method=manual, ipv4.dns-search=`~.` so it's catch-all)
+- `twingate status` reported "online" and `/run/twingate/auth.sock` existed, but `dig @100.95.0.251 github.com` timed out — tunnel up, resolvers themselves not answering
+
+### Investigation
+- Confirmed 100.95.0.x are Twingate-owned (route via `sdwan0`, not Tailscale — Tailscale's `dns status` just reads `/etc/resolv.conf` and reports the same IPs as "system DNS")
+- `systemctl restart twingate.service` did NOT bring the resolvers back; CLI `twingate stop && twingate start` blocked on an interactive "another VPN active" prompt (Tailscale also up — both use CGNAT, hence the false detection)
+- Watchdog `network-health-monitor.sh` had logged every 10-minute check as fully healthy throughout the outage — it never probes DNS resolution, only ICMP to public IPs + systemctl + socket existence
+
+### Fix
+1. Started TW client back up via systemctl (left in `online` state)
+2. Moved sdwan0 DNS off Twingate's broken resolvers and onto pihole:
+   ```
+   nmcli connection modify sdwan0 ipv4.dns 192.168.68.248
+   nmcli connection modify sdwan0 ipv4.ignore-auto-dns yes
+   nmcli device reapply sdwan0
+   ```
+   Persisted to `/etc/NetworkManager/system-connections/sdwan0.nmconnection`. resolv.conf now has only `nameserver 192.168.68.248`. pihole resolves both LAN and public — book5 does not need Twingate-internal name resolution.
+3. DNS verified: `getent hosts github.com` → 140.82.114.4, `ping github.com` succeeds. Twingate still `online`, connector untouched.
+
+### Watchdog Patch
+- `/usr/local/bin/network-health-monitor.sh` patched (backup at `network-health-monitor.sh.bak-2026-05-20`)
+- Added `check_dns()` — probes `getent ahostsv4` against cloudflare/google/github with 4s timeout
+- Added new state branch "Case 4.5: DNS broken but everything else OK" — logs `action=dns_broken` and a hint to check resolv.conf/pihole/sdwan0. **Does not auto-remediate** — the 2026-05-20 incident showed TW client restart didn't fix it, and blind restart loops are worse than a clear log line
+- "Case 5: Everything OK" now also requires `dns_ok=OK` so the watchdog doesn't report green during a future DNS outage
+- log_check format unchanged (callers compatible); DNS state shows up via a separate `INFO dns_broken: ...` line
+
+### Risk / Follow-up
+- If Twingate client install/update overwrites the NM connection, sdwan0 DNS will revert to 100.95.0.x. Backup of original kept; re-apply nmcli commands if observed
+- Root cause of TW resolver outage not determined (likely Twingate backend / sdwan0 tunnel state) — if it recurs, capture `twingate logs` + `ip -s link show sdwan0` before re-applying the workaround
+
 ## 2025-11-07 - Project Inception
 
 ### Initial Setup
