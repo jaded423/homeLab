@@ -1,5 +1,47 @@
 # HomeLab Project Changelog
 
+## 2026-05-27 - Tailscale-vs-Twingate consolidation: TS now primary, Twingate scoped to media
+
+### Outcome
+- **Tailscale is now the primary access layer** for all admin/SSH + homelab web UIs + RustDesk. **Twingate kept only** for what TS structurally can't reach: VM101/Mullvad-locked apps, Home Assistant web UI, AMT break-glass, and the remote (mom's) site.
+- Twingate resources pruned **27 → 12**. SSH alias convention **inverted** (bare = Tailscale). Web UIs reachable by **MagicDNS name** (no aliases needed).
+
+### Root cause that kicked this off: TG/TS CGNAT collision
+- RustDesk direct-IP to PC failed while `tailscale ping` worked. Cause: Twingate installs a `100.96.0.0/12` route to its tunnel; Tailscale uses `100.64.0.0/10`. The `/12` is more specific → longest-prefix match steals any Tailscale peer numbered `100.96–100.111.x` (PC `100.99`, pi1 `100.98`) into Twingate's tunnel → TCP filtered. `tailscale ping` works because it uses userspace WireGuard, bypassing the OS routing table.
+- **Fix deployed:** root LaunchDaemon `com.jaded.ts-pin-routes` + `/usr/local/sbin/ts-pin-routes.sh` on the Mac. Pins PC + pi1 with `/32` host routes via Tailscale's interface (a `/32` beats TG's `/12`). Re-asserts on `RunAtLoad` + network-change events. Verified: TG on → 100.96/12 back on utun5, but PC/pi1 stay on utun4, `nc 100.99.217.17 22` OPEN.
+
+### Twingate resource cleanup (admin GraphQL API)
+- Generated an API token (Settings → API, "Claude", Read/Write/Provision), stored in the Mac Keychain (`security find-generic-password -a twingate -s twingate-api -w`). No MCP — curl against `jaded423.twingate.com/api/graphql/`.
+- **Deleted 15 redundant resources** (TS covers them, or junk): proxmox-web, Cockpit Book5, Cockpit Tower, prox-tower ssh, zMagic, Omarchy, n8n, mac-ssh, zWindows-SSH, RustDesk, zWindows (127.0.0.1), go-linux (172.17.0.1), homeLab Shared, Homelabel, Go-Elevated.
+- **Kept 12:** VM101 apps (Plex, qBit, Frigate, Odoo, Portainer, Open Webui, Jit, Minecraft — Mullvad lockdown blocks direct tailnet), homeassistant (.111 web UI), AMT (.249 out-of-band break-glass — works when tower OS is down, so TS-via-tower can't replace it), mom-lan + Mom-pi (remote site).
+
+### home-assistant VMID 112 → 111
+- Renamed back to VM 111 now that the old book5 VM 111 is gone (VMID matches its IP `.111` per original plan). ZFS path: stopped VM, `zfs rename` the 3 zvols (`media-pool/vm-disks/vm-112-disk-{0,1,2}` → `vm-111-*`), `sed` the disk refs + `mv` the config, started as 111. Pre-rename safety backup at `local:/var/lib/vz/dump/vzdump-qemu-112-2026_05_27-11_37_00.vma.zst` (3.3G, delete once stable). IP stays `.111`, HA healthy (`:8123` up, agent OK).
+
+### homeLab Shared retired
+- The old Samba share on book5 was stale (no clients; omarchy's client mount was already commented; only a hand-added `[root]` share exposing `/root` rw remained — security smell). Removed the `[root]` share, **disabled + stopped `smbd`/`nmbd`** on book5 (backup `smb.conf.bak-2026-05-27`), deleted the TG resource, removed omarchy's dead CIFS fstab line.
+
+### book5 Twingate connector recovered (recurring DNS bug)
+- `prox-book5-systemd` showed DEAD in admin since 2026-05-23 while `systemctl` reported active. Cause: a TG client update reverted book5's `sdwan0` NM DNS back to the dead `100.95.0.x` resolvers (with `dns-priority=-1`, `dns-search=~.` = authoritative for all domains) → all book5 DNS failed → connector couldn't resolve the control plane. Re-applied the pihole override (`nmcli connection modify sdwan0 ipv4.dns 192.168.68.248 ipv4.ignore-auto-dns yes` + `device reapply`) + restarted connector → ALIVE in 10s. **2nd occurrence — every TG update may revert it** (auto-remediation TODO logged in `network-cleanup-todo.md`).
+
+### Pixelbook Go onto Tailscale (CachyOS)
+- Replaces the deleted `go-linux` TG resource. Tailscale installed via pacman, authed as `go` (`100.114.126.32`). Flagged a MagicDNS systemd-resolved/NM conflict on Go (cosmetic — IP alias works; TODO logged).
+
+### SSH alias convention inverted (Mac `~/.ssh/config`)
+- **bare alias = Tailscale** (primary, works anywhere on tailnet, via MagicDNS), `*-local` = home-LAN direct. Removed the Twingate SSH path entirely (TS reaches every homelab host). Backup `~/.ssh/config.bak-2026-05-27`.
+- `omarchy` ProxyJump **dropped** (tested: direct TS works). `ubuntu` **keeps** ProxyJump tower (Mullvad blocks direct tailnet ingress — confirmed by test). pc/wsl/go reverse tunnels through book5 **dropped** (flaky + redundant). Added `pc-ts`/`wsl-ts`/`go-ts` (folded into bare). `trans`/`Homelabel` removed (CT `.61` scrubbed).
+
+### Web UI access via MagicDNS (no aliases)
+- MagicDNS works on the Mac (suffix `tail950cc2.ts.net`). Bookmarks: `https://prox-book5:8006` / `prox-tower:8006` (Proxmox), `:9090` (Cockpit), `http://pihole/admin/`, `http://omarchy:5678` (n8n), `https://omarchy:47990` (Sunshine, user `jaded423`).
+- **n8n secure-cookie fix:** `http://omarchy:5678` was rejected by n8n's default `N8N_SECURE_COOKIE=true`. Added `N8N_SECURE_COOKIE=false` to `~/docker/tower-guardian/docker-compose.yml` on omarchy + recreated (safe — access is over encrypted TS/LAN). Backup `docker-compose.yml.bak-2026-05-27`.
+
+### Files / artifacts
+- `docs/network-cleanup-todo.md` - new follow-up list (book5 DNS auto-reapply, Go MagicDNS, delete HA backup, n8n URL polish, Tailscale Serve option)
+- Mac: `~/.ssh/config` (inverted), `/usr/local/sbin/ts-pin-routes.sh` + `/Library/LaunchDaemons/com.jaded.ts-pin-routes.plist` (new)
+- book5: `smbd` disabled, `sdwan0` DNS → pihole; omarchy: n8n env + fstab; tower: VM 111 rename + backup
+
+---
+
 ## 2026-05-20 → 2026-05-21 - Home Assistant deployed on tower (VM 112) with porch cam watchdog
 
 ### Outcome

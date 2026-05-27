@@ -37,7 +37,8 @@ This project documents the research, planning, and setup of an affordable but po
 - ✅ Git repos cloned to Proxmox (`~/repos/`)
 - ✅ SSH access to Mac via Twingate (works from any network)
 - ✅ Homelable topology visualizer in CT 103 (192.168.68.61:3000) with MCP server on :8001
-- ✅ **Home Assistant OS on tower VM 112** (192.168.68.111) — Hubspace + Frigate + MQTT + porch cam watchdog automation. SSH alias `ha` via ProxyJump tower. Token + emergency kit stored on tower + ubuntu.
+- ✅ **Home Assistant OS on tower VM 111** (192.168.68.111) — Hubspace + Frigate + MQTT + porch cam watchdog automation. SSH alias `ha` via ProxyJump tower. Token + emergency kit stored on tower + ubuntu. *(Renamed from VM 112 → 111 on 2026-05-27; IP unchanged.)*
+- ✅ **Tailscale promoted to primary access layer (2026-05-27).** Bare SSH aliases now = Tailscale; Twingate scoped to media (VM101/Mullvad apps + HA web UI + AMT + remote site), pruned 27→12 resources. Web UIs via MagicDNS (`https://prox-book5:8006`, etc.). Samba on book5 retired. See changelog 2026-05-27.
 
 > Note: Network IPs in the table below pre-date the Feb-2026 router migration (now 192.168.68.0/22). Authoritative current state lives in `~/.claude/CLAUDE.md` "Home Lab Quick Reference".
 
