@@ -1,0 +1,38 @@
+#!/bin/bash
+# NetworkManager dispatcher hook: keep sdwan0 (Twingate) DNS pinned to pihole.
+#
+# WHY: Twingate client updates periodically revert sdwan0's NM DNS back to its
+# own 100.95.0.x resolvers (ipv4.ignore-auto-dns=no). Those resolvers go dead
+# while the client still reports "online", so ALL book5 DNS times out, the
+# connector can't reach the control plane, and TG admin shows the connector as
+# DEAD_HEARTBEAT_TOO_OLD even though systemd reports the service active.
+# Recurred 3x by 2026-05-27. See ~/.claude/CLAUDE.md "book5 DNS routing" note.
+#
+# This hook re-pins DNS to magic-pihole (192.168.68.248) whenever sdwan0 comes
+# up or changes, then restarts the connector — but only when the DNS is
+# actually wrong, so the reapply it triggers does not loop.
+
+IFACE="$1"
+ACTION="$2"
+DESIRED_DNS="192.168.68.248"   # magic-pihole
+
+[ "$IFACE" = "sdwan0" ] || exit 0
+case "$ACTION" in
+    up|dhcp4-change|dhcp6-change) ;;
+    *) exit 0 ;;
+esac
+
+current_dns=$(nmcli -g ipv4.dns connection show sdwan0 2>/dev/null)
+current_ignore=$(nmcli -g ipv4.ignore-auto-dns connection show sdwan0 2>/dev/null)
+
+# Already pinned -> no-op. This guard is what prevents the reapply below from
+# re-triggering this hook in an infinite loop.
+if [ "$current_dns" = "$DESIRED_DNS" ] && [ "$current_ignore" = "yes" ]; then
+    exit 0
+fi
+
+logger -t twingate-dns-pin "sdwan0 DNS was '$current_dns' (ignore-auto-dns=$current_ignore); re-pinning to $DESIRED_DNS"
+nmcli connection modify sdwan0 ipv4.dns "$DESIRED_DNS" ipv4.ignore-auto-dns yes
+nmcli device reapply sdwan0
+systemctl restart twingate-connector
+logger -t twingate-dns-pin "re-pin complete, twingate-connector restarted"

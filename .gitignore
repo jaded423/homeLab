@@ -16,6 +16,9 @@
 *.test
 scratch/
 
+# Operational TODO — internal infra detail + credentials; never publish (repo is public)
+TODO.md
+
 # Ansible
 *.retry
 

@@ -1,5 +1,124 @@
 # HomeLab Project Changelog
 
+## 2026-06-15 - PC watchdog 3-tier finished (Tier-2 published) + Elevated Twingate HA connector pair
+
+### Outcome
+- **Weekend verdict — Brad Tier-1 watchdog ran clean.** `com.elevated.pc-watchdog` (LaunchAgent, StartInterval 60s) polled all weekend: `fail_count=0`, `reboot_count=0`, zero firings, **no false reboots**. Only log entries were Friday's manual test (self-reset at 2/5). The Tier-2 false-reboot failure mode did NOT recur on Tier-1.
+- **Tier-2 rebuilt + PUBLISHED** on omarchy n8n (workflow `sq6c3CWdw5AihV4me8PDB`, "PC Health Monitor v3 (Tier-2 gated)") — finishing the 3-tier design.
+- **Elevated Twingate connectors restored as an HA pair** — recreated the deleted WSL connector + added a new Brad connector, both in the `Elevated` remote network (`jaded423`).
+
+### Tier-2 (omarchy n8n)
+- Published via the **n8n public REST API** (minted an API key), NOT direct DB edits — that's the fix for the snapshot trap that double-rebooted the PC (n8n runs the `activeVersionId` version snapshot, not `workflow_entity.nodes`). API path sets `activeVersionId` correctly.
+- Graph: `Schedule(5m) → executeCommand probe PC 100.105.93.121:22 + Brad 100.82.50.89:22 over tailnet → Code "Decide" (gated) → Switch → {IFTTT plug-cycle | ntfy alert}`. Container confirmed able to reach both tailnet IPs on :22.
+- Gate: fires ONLY when **PC AND Brad both down ≥6 cycles (~30 min)**; Brad up ⇒ Decide returns 0 items ⇒ silent (won't fight Tier-1). Verified live: PC up → no-op, no downstream nodes ran.
+- Rewired the two notify nodes from IFTTT → **ntfy** (private topic — see local TODO / n8n workflow for the value). IFTTT power-key validated live (non-destructive probe). n8n API key stored `omarchy:~/.n8n_api_key` (0600).
+
+### Twingate connectors (Elevated network `jaded423`)
+- **`twingate-wsl`** — recreated on WSL (native Docker 29.1.3), replaced the dead `twingate-daffodil-puma` (its admin-side connector had been deleted → invalid token). Deployed via `--env-file` (inline `--env` + long token strings fail to parse over `ssh wsl`).
+- **`twingate-brad-mac`** — new connector on Brad. Brad had no brew/Docker/runtime, so installed a **fully-userspace colima (vz) + docker CLI** in `~/.local` (no sudo/brew/GUI; Apple Virtualization, no qemu). Container→`192.168.1.1` LAN reachability verified (connector can serve Elevated LAN resources). Both connectors reached `Online`.
+- **Auto-update: Watchtower** (`nickfedor/watchtower`, daily 04:00 UTC) on each host, scoped to the connector + watchtower.
+- Brad chosen over Pi1 for redundancy: Pi1's internet routes through `192.168.137.1` (the PC's ICS), so it dies exactly when the PC does. Brad is the only PC-independent always-on Elevated host. WSL's connector is on the PC, so it also dies with the PC — Brad is the real redundancy.
+
+### Brad cold-reboot resilience (tested)
+- **FileVault DISABLED on Brad** + **auto-login** = elevatedtrading (policy: FV only on Macs that leave the premises; Brad is stationary + controlled).
+- **Cold reboot tested end-to-end:** reboot → auto-login → colima LaunchAgent → connector `Online` + Tier-1 watchdog polling, all unattended (~2 min).
+- The reboot caught a latent bug the manual install hid: the `com.elevated.colima` LaunchAgent ran `zsh -lc "colima start"`, but `-lc` (login, non-interactive) does NOT source `~/.zshrc` where the PATH export lived → `limactl` not found → colima silently failed every boot. **Fixed:** plist now sets `PATH` (and `HOME`) via `EnvironmentVariables` instead of relying on shell rc.
+
+### Why
+- Tier-2 was the last unfinished piece of the 3-tier PC watchdog; the Elevated Twingate network had drifted to zero working connectors (WSL connector deleted in admin). Both are PC-availability infrastructure for the Elevated office.
+
+### Gotchas banked
+- `containrrr/watchtower` is abandoned — its client API 1.25 < Docker 29's min 1.40, crash-loops. Use the maintained `nickfedor/watchtower`.
+- WSL `~/.docker/config.json` had `credsStore: desktop` → `docker --pull` invoked `docker-credential-desktop.exe` (not in WSL PATH) and failed. Removed the key.
+- `docker run` over `ssh wsl` with long token `--env` values fails to parse — use `--env-file`.
+
+### Files modified (on the boxes, not this repo)
+- `omarchy:` n8n workflow `sq6c3CWdw5AihV4me8PDB` (republished via API); `~/.n8n_api_key` (new, 0600).
+- `wsl:` `twingate-wsl` + `watchtower` containers; `~/.docker/config.json` (credsStore removed).
+- `brad:` `~/.local/{bin,share,state}` (colima/lima/docker userspace install); `twingate-brad-mac` + `watchtower` containers; `~/Library/LaunchAgents/com.elevated.colima.plist` (PATH fix); FileVault off + auto-login.
+
+### This repo
+- `TODO.md` — marked PC-watchdog + Twingate-connectors items done; DHCP-reservations demoted to low-prio/blocked.
+
+---
+
+## 2026-06-05 - Containerized Steam (steam-headless) on VM 101 — second game-stream rig
+
+### Outcome
+- **Deployed `josh5/steam-headless` on VM 101 (ubuntu, tower)** as a second Moonlight/Sunshine game-streaming rig, complementing omarchy. Full XFCE desktop + Steam + Sunshine in one container, GPU = the passed-through **Quadro M4000 (8GB dedicated VRAM)**. Verified end-to-end: Steam login → Proton → **Torchlight II** runs, streamed to Mac via Moonlight, Steam Big Picture fullscreen works.
+- **Why a second rig:** M4000's 8GB *dedicated* VRAM beats omarchy's shared-RAM Lunar Lake iGPU for VRAM-bound older AAA; 35GB RAM, 28 vCPU, 109GB free for games. Trade-off below.
+
+### Deploy details (`/home/jaded/docker/steam-headless/`)
+- `docker-compose.yml` + `.env` adapted from the project's NVIDIA template: nvidia runtime, `network_mode: host`, `/dev/uinput` + `/dev/fuse`, `FORCE_X11_DUMMY_CONFIG=true` (headless dummy display), `ENABLE_SUNSHINE=true`, web desktop on `:8083`, Sunshine on `:47990`. Games → `/mnt/games` (lands at `/mnt/games/GameLibrary`, on the 109GB `/`). Footprint ~8.6GB (image 3.8 + Steam home 4.2 + layer 0.6).
+- **Flatpak-installer hang fix:** first boot wedged — `start-desktop.sh` runs `install_firefox.sh`/`install_protonup.sh` (both `flatpak --user`, which deadlocks headless) in a blocking xterm *before* `startxfce4`, so XFCE never starts → Sunshine's "wait for desktop" times out → crash loop. **Fix:** no-op override scripts bind-mounted over both (`overrides/install_*.sh:/usr/bin/install_*.sh:ro`). Durable across recreate. Firefox/ProtonUp non-essential for gaming.
+- **CSRF pairing fix:** added `csrf_allowed_origins = https://192.168.68.101:47990` + `origin_web_ui_allowed = wan` to `sunshine.conf` (PIN POST was CSRF-blocked from the non-localhost origin).
+
+### The encoder wall: NVENC blocked by Maxwell EOL
+- Current Sunshine (`v2026.516`) needs **nvenc API 13 / driver ≥570**; the M4000 is Maxwell, **permanently capped at the 535 legacy branch** (570+ dropped Maxwell). So **hardware NVENC is impossible with current Sunshine.** VAAPI also fails (no Intel/AMD iGPU on tower). Fell back to **software x264.**
+- **x264 verdict (sampled live during Torchlight II):** Sunshine encode ~**1.7 cores**, system 62% busy / 38% idle, M4000 16% util / 624MB, **Frigate cameras unaffected (coexist fine).** Software encode is genuinely viable for older/emulator titles. Set `sw_preset = ultrafast` (bitrate untouched) to cut per-frame CPU spikes.
+- **NVENC path (deferred, optional):** to get hardware encode, swap in **Sunshine v2025.122** (Jan 2025, last pre-driver-570 build; ships an AppImage that sidesteps Debian-13 deps). Fragile — breaks on image updates, may force re-pair. Only do it if the audio pulse is confirmed encode-jitter (testing pending).
+
+### Mullvad: single-hop SE → multihop SE-entry / DAL-exit
+- VM 101 egresses through Mullvad (Lockdown Mode, was Stockholm exit). Steam flagged the Swedish IP as a suspicious login. **Reconfigured to multihop: entry Stockholm (`se sto`), exit Dallas (`us dal`)** via `mullvad relay set location us dal` + `set entry location se sto` + `set multihop on`. Now `us-dal-wg-* via se-sto-wg-*` — Steam sees a US/Dallas IP (matches account, fast local downloads) while the entry hop stays foreign-jurisdiction. **Affects all VM101 Mullvad-routed apps** (qBit etc. now exit Dallas; still private). Note: the Sweden *entry* hop caps throughput (~264 Mbps vs ~700-900 single-hop vs ~1.9 Gbps bare) — offer-standing to move entry to Canada for speed if wanted.
+
+### Open / pending (user testing tonight)
+- **Audio pulsing** (same symptom as omarchy RDR): suspected software-x264 per-frame CPU-spike jitter on the shared Sunshine audio path (VM101 is only ~38% loaded, so not raw load). `sw_preset=ultrafast` applied; if pulse persists it's likely network (omarchy's final verdict was network-jitter), in which case NVENC wouldn't help either.
+- **TL2 quirks:** native 2012 Linux build is broken (`ld.so`/LD_PRELOAD) — **force Proton 9.0** (Experimental crashed on Play, 9.0 works). In-game Options menu crashes (Proton quirk, parked). General rule banked: old DX9 → Proton 9.0; new → Experimental/GE; ancient native Linux → force Proton.
+- **Big Picture clean-close:** steam-headless's `apps.json` already includes the `steam://close/bigpicture` undo + `xfce4-close-all-windows` + `pkill sunshine` teardown (more thorough than omarchy's) — but only fires when launched via the **"Steam Big Picture" Moonlight app**, not "Desktop."
+- Creds are weak LAN defaults (`steam-tower-2026`) — change after testing. Remote access (Twingate/TS) not set up yet.
+
+### Files (on VM 101, not this repo)
+- `/home/jaded/docker/steam-headless/{docker-compose.yml,.env,overrides/}` — new.
+- `~/.config/sunshine/{sunshine.conf,apps.json}` inside the container (persistent home volume).
+- Mullvad daemon settings (multihop) — VM 101 host.
+
+---
+
+## 2026-06-04 - RDR (2024) playable on omarchy via Moonlight/Sunshine (Proton fix chain)
+
+### Outcome
+- **Red Dead Redemption (2024 port, Steam appid `2668510`) now runs** on VM 100 (omarchy) streamed to the Mac via Sunshine→Moonlight (Steam Big Picture). Renders the full intro/cutscenes, no crash, no black screen. Audio pulsing fixed by enabling FSR (was iGPU+encoder load contention). Remaining nit: very slight audio crackle on some remote paths only — network jitter on the audio stream, not the box (LAN/good links are clean). Client-side Moonlight audio-buffer bump if ever needed.
+
+### The three real problems (and what actually fixed each)
+1. **Crash `ACCESS_VIOLATION (0xC0000005)`** at world-load. Crash dump: fault in `libvkd3d-shader` / `D3D12PixelShader`, `rip 0x600000000005` (garbage jump) — a vkd3d-proton shader-translation bug in **stock Proton Experimental**. *Not* VRAM (lowering render res 2880→1280 didn't move the crash point). **Fix: installed GE-Proton10-34** (`~/.steam/root/compatibilitytools.d/`) and forced it for RDR via `CompatToolMapping` in `config.vdf`.
+2. **Black 3D scene** (UI + audio fine). Cause: a leftover launch option **`PROTON_USE_WINED3D=1`** forcing the OpenGL-based wined3d path on a D3D12 game → broken/black render. **Fix: cleared RDR's `LaunchOptions`** in `localconfig.vdf`.
+3. **Black/tiny window on Xwayland.** RDR "fullscreen" at a non-desktop res becomes a small black window on the 2880×1800 virtual display (Xwayland can't modeset it). **Fix: set game resolution = desktop (2880×1800)** so fullscreen fills with no mode-switch. Also set `bFocusPaused=false`.
+
+### Hardware reality
+- omarchy GPU = **Intel Arc 130V/140V (Lunar Lake iGPU)**, shared system RAM; VM 100 has **~11GB** of book5's **15GB** host (no room to grow — book5 is the OOM-prone laptop). Sunshine's encoder hits the *same* iGPU as the game. RDR 2024 is marginal here; expect to lean on FSR upscaling for playable fps + to keep the audio stream from underrunning.
+- Mesa/vulkan-intel `26.0.6`, Proton Experimental `11.0-20260529` — both fresh, so this was a genuine vkd3d↔RDR incompat, not stale drivers. `gamescope 3.16.23` installed as a fallback render-surface lever (not currently in use; the wined3d-flag removal made it unnecessary).
+
+### Files modified (on omarchy / VM 100, not this repo)
+- `~/.steam/steam/config/config.vdf` — added `CompatToolMapping` 2668510→GE-Proton10-34. Backup `config.vdf.bak-pre-ge`.
+- `~/.steam/steam/userdata/79228882/config/localconfig.vdf` — cleared RDR `LaunchOptions`. Backup `localconfig.vdf.bak-gamescope`.
+- `.../Rockstar Games/Red Dead Redemption/graphicsOptions.xml` — res 2880×1800, FSR off (disabled to isolate the black screen), `bFocusPaused=false`. Backups `.bak-pre-vramfix`, `.bak-blackscreen`.
+
+### Known-good rollback config (this entry)
+- GE-Proton10-34, empty LaunchOptions, Fullscreen=true, 2880×1800, **FSR3UpscalingQuality=0**, bFocusPaused=false. Crash-free + renders. (Next step: re-enable FSR Performance for fps + to fix the audio pulse — load-induced, iGPU+encoder contention.)
+- NOTE: `docs/gaming-vm-plan.md` is **stale** — it describes an abandoned Windows-VM-on-tower-with-M4000-passthrough plan. The actual rig is omarchy Steam/Proton + Sunshine.
+
+---
+
+## 2026-06-03 - HA porch-cam fix, HA 2026.5.4, Frigate self-healing (autoheal + notifier)
+
+### What changed
+- **Fixed porch cam watchdog automation.** Repair error `Porch cam offline → power cycle plug ... has an unknown action: tts.google_translate_say`. That TTS service was removed in HA 2026.x. Replaced with modern `tts.speak` (target `tts.google_translate_en_com`, `media_player_entity_id: media_player.family_room_speaker`) — announcement preserved. Cameras were never down; only the automation failed validation.
+- **HA core updated 2026.5.3 → 2026.5.4.** Pre-update backup slug `58ba1362` on HA.
+- **Frigate self-healing deployed on VM101.** Frigate had wedged: nginx (5000) served the page shell but the backend app (5001) hung — every `/auth`+`/api/*` call 504'd, health check went red (`Up 7 days (unhealthy)`), UI blank. Logs also showed a stuck 60s `clip.mp4` export from `plate_recognizer` (python-requests) piling on `/api/events`. Restarted container to clear the wedge (back to healthy, API 0.17.1), then added `willfarrell/autoheal` to the frigate compose stack + labeled frigate `autoheal=true`. Autoheal polls Docker health every 15s and restarts any unhealthy container, 120s start-period grace to avoid restart loops.
+- **Wired autoheal → HA notification.** autoheal `WEBHOOK_URL` → HA webhook `autoheal_frigate_restart` (local_only) → new automation `autoheal_frigate_notify` → `persistent_notification.create`. A Frigate auto-restart now surfaces in the HA bell. Tested end-to-end (webhook 200, automation triggered).
+
+### Why
+- Self-healing requested after the manual restart. Autoheal acts on Frigate's existing healthcheck locally on VM101 (no HA dependency — HA itself was the fragile piece earlier this session). Notifier gives visibility into *how often* it fires, so a recurring wedge (suspect: the plate_recognizer events-export loop) surfaces instead of silently looping.
+
+### Files modified (on the boxes, not this repo)
+- `ha:/config/automations.yaml` — porch action fix + new `autoheal_frigate_notify` automation. Backup `automations.yaml.bak-2026-06-03`.
+- `ubuntu(VM101):/home/jaded/docker/frigate/docker-compose.yml` — added `autoheal` service, `autoheal=true` label on frigate, `WEBHOOK_URL` env. Backup `docker-compose.yml.bak-2026-06-03`.
+
+### Going forward
+- If autoheal starts firing often, root-cause the `plate_recognizer` → `/api/events/.../clip.mp4` export stall rather than relying on restarts.
+
+---
+
 ## 2026-05-27 - Tailscale-vs-Twingate consolidation: TS now primary, Twingate scoped to media
 
 ### Outcome
@@ -39,6 +158,9 @@
 - `docs/network-cleanup-todo.md` - new follow-up list (book5 DNS auto-reapply, Go MagicDNS, delete HA backup, n8n URL polish, Tailscale Serve option)
 - Mac: `~/.ssh/config` (inverted), `/usr/local/sbin/ts-pin-routes.sh` + `/Library/LaunchDaemons/com.jaded.ts-pin-routes.plist` (new)
 - book5: `smbd` disabled, `sdwan0` DNS → pihole; omarchy: n8n env + fstab; tower: VM 111 rename + backup
+
+### Addendum (same day): mom-pi onto Tailscale
+- mom-pi (Pi 400 @ mom's, Debian 13 aarch64) joined tailnet `100.89.98.66`; `pi-mom` alias now = Tailscale. Disabled the failing `ssh-tunnel.service` (book5 reverse tunnel) — it was always redundant since mom-pi runs its own Twingate connector. Brought up `--accept-dns=false`, Tailscale SSH disabled (key-based like the fleet).
 
 ---
 
