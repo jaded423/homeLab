@@ -1,5 +1,72 @@
 # HomeLab Project Changelog
 
+## 2026-06-19 - Power outage: mesh AP fried, CT102 retired, VM101 unhealthy
+
+### What happened
+- **Power surge / outage** took down the network. Post-event reachability scan (homelab-net-check) from Mac (roamed to 192.168.68.62/22):
+- 🔴 **TP-Link secondary mesh AP (192.168.71.250) DESTROYED** — fried in the surge, no LED, confirmed dead in person. Was the last node still on the surge protector. Replacement node TBD. Cameras PetCam (.75) + Porch (.76) rerouted cleanly onto the primary AP — both reachable.
+- 🟢 Core infra survived: book5, tower, omarchy (VM100), pihole all UP (LAN + Tailscale + tunnel). Tower rebooted in the event (uptime ~59 min at scan).
+- 🟡→✅ **VM101 (ubuntu) was unreachable — ROOT-CAUSED + FIXED this session.** `qm status 101` = running, but no L2 from tower (`ip neigh` FAILED, .101:22 "No route to host"). Misdiagnosed first as Mullvad lockdown (status stuck "Connecting", even single-hop Stockholm cycling relays). Real cause: **the cable reroute stranded tower's VM taps** — `tap101i0` parked on the dead stock-1G `vmbr0`, `tap111i0` on **no bridge at all** (HA/VM111 was also dark). Mullvad "Connecting" was a *symptom* of zero upstream, not the disease. Fix: `ip link set tap101i0 master vmbr1` + `tap111i0 master vmbr1` → both onto the 2.5G `enp2s0`. Both VMs immediately reachable. Then re-armed Mullvad (single-hop Stockholm, lockdown ON, LAN allow) — SSH persists through the killswitch.
+
+### Bonus: VM101 silently upgraded 1G → 2.5G
+- VM101 had been on the stock **1.0GbE** (`vmbr0`/`nic0`) the entire time — Joshua meant to merge it onto 2.5G in a prior reroute and never did. The outage forced it. Post-fix speedtests from VM101: **single-hop Stockholm (VPN) 1178↓/583↑ Mbps** (was ~950 capped on 1G), **direct/no-VPN from tower 2005↓/633↑**. ~25% gain on the everyday STO path. Mullvad exit is now hop-swappable (default STO; SE→DAL for US/gaming) — see CLAUDE.md.
+- ⚠️ **Persistence caveat**: the tap→`vmbr1` move is runtime-only. net0 configs already = `vmbr1`, so a clean boot should reattach, but they stranded once — verify `bridge link show | grep tap` after the next tower reboot/power event. Tracked in TODO.
+
+### CT102 retired (separate, deliberate)
+- **CT 102 `trans` LXC (192.168.68.65) DESTROYED** — deleted to free book5 resources (not a casualty — intentional). `trans` transcript work now runs ad-hoc, no dedicated container. Doc rows for CT102 may have been missed in a prior `/log`; corrected this session.
+
+### Elevated tailnet note
+- "PC tail down but WSL up" explained: PC Windows host carries **two Tailscale identities** — `jaded423@ pc-windows` (100.99.217.17, offline 6d) and `joshua@ pc-windows` on tailnet `tail275437` (100.105.93.121, ONLINE). Working path (`ssh pc`) rides the online joshua@ node; `ssh wsl` (workhorse `etintake`, up 2d10h) UP. WSL runs its own tailscaled (joshua@, online) so it was unaffected by the jaded423@ node dropping. `go` offline (expected — side project). `shippingpc` offline 14d (never fully set up — TODO).
+
+### Mullvad hop-swap aliases (VM101 `~/.zshrc`, user jaded)
+- Added + tested `mv-sto` (single-hop Stockholm, everyday default) and `mv-dal` (multihop `se sto`→`us dal` US exit, gaming-only). VM101 is the only Mullvad box; tower/host never on VPN. `mv-dal` exists because Rockstar/Steam reject a Sweden exit IP ("unusual activity detected") — Dallas was the only way to log into Steam. Both aliases force lockdown ON + LAN allow; there is no VPN-off mode. `mv` = quick status. Tested live: mv-dal → 23.234.106.240 (Dallas), mv-sto → 89.37.63.246 (Stockholm), left on STO.
+
+### qemu-guest-agent staged on VM101
+- VM101 was the only VM **without** the guest agent (VM100 omarchy + VM111 HA already had it) — ironic, since its Mullvad killswitch makes it the hardest box to reach and the agent rides virtio-serial (not the LAN), so it'd have let the host introspect VM101 while the network was dark. Installed `qemu-guest-agent` in the guest + `qm set 101 --agent 1` on tower. Service is `static` (udev-activated by the virtio-serial port). **Channel only attaches on a full VM stop→start (not a reboot)** — activation deferred to the next VM101 power-cycle; verify then with `qm agent 101 ping`. Tracked in TODO alongside the tap-persistence check.
+
+### Files modified
+- `CLAUDE.md` (homeLab + global `~/.claude/CLAUDE.md`) — mesh AP + CT102 rows DESTROYED; VM101 Mullvad section rewritten (hop-swappable, STO default); added 2.5G NIC-merge + tap-strand gotcha.
+- `TODO.md` — VM101 recovery DONE; added tap-persistence + guest-agent-activation + replace-mesh-AP + finish-shippingpc items.
+- `VM101:~/.zshrc` — `mv-sto`/`mv-dal`/`mv` aliases.
+- Memory: `vm-tap-stranded-wrong-bridge`, `pc-dual-tailscale-identity` (+ MEMORY.md index).
+
+---
+
+## 2026-06-19 - Removed Tailscale from VM101 (ubuntu) + deleted tailnet node
+
+### What changed
+- Purged Tailscale from VM101 (`ssh ubuntu`): `tailscale logout` (timed out, rc=124 — see below), `systemctl disable --now tailscaled`, `apt-get remove --purge tailscale` (1.98.3, 73 MB freed). Daemon + binary gone.
+- Deleted the `vm101-ubuntu` node (`100.120.104.11`) from the tailnet via admin console GUI.
+
+### Why
+- VM101 always showed **offline** in the Tailscale admin console. Diagnosis: daemon was up (had IP, saw peers) but the health check reported "Unable to connect to the Tailscale coordination server." Mullvad **lockdown mode** (block traffic when VPN disconnected) blocks all non-VPN egress, including Tailscale's outbound to `controlplane.tailscale.net` — so the node could never sync.
+- Access to VM101 was never via Tailscale anyway (Mullvad lockdown also drops inbound CGNAT 100.64/10 on tailscale0). It's reached via `ssh ubuntu` → ProxyJump tower (Twingate/Mullvad path), which is **unchanged**. The Tailscale node was dead weight + console noise.
+- User wants to keep both the ProxyJump and Mullvad lockdown → removing Tailscale is the clean resolution.
+
+### Technical notes
+- `tailscale logout` timed out (rc=124) because lockdown blocked it reaching the control server to deregister — expected. So the node stayed registered until the manual GUI delete. **Uninstalling does NOT auto-remove a node from the tailnet**; it just shows offline/expired until deleted server-side.
+- Mullvad state on VM101 at time of removal: multihop `se sto` entry → `us dal` exit (23.234.105.249), lockdown ON.
+
+### Files modified
+- `CLAUDE.md` — VM ProxyJump note: added Tailscale-removed-2026-06-19; Tailnet line: VM101 now an exception.
+
+---
+
+## 2026-06-18 - CLAUDE.md becomes the homelab single source of truth
+
+### Outcome
+- **`~/projects/homeLab/CLAUDE.md` is now the authoritative home for homelab current-state.** Added a new top section **"Operational Current State (AUTHORITATIVE — homelab source of truth, 2026-06-18)"** holding the full operational reference: 192.168.68.0/22 SSH/IP table, Tailscale/SSH inversion (2026-05-27), VM ProxyJump rules, web UIs, VM-101 services (incl. steam-headless), Mullvad multihop `se sto`→`us dal`, autoheal, roaming reverse tunnels, Pi1, tailnet, book5 watchdogs + DNS-pin hook, tower services + crash instrumentation (kernel pin 6.17.4-2-pve).
+- The stale pre-Feb-2026 `192.168.2.x` "Network Cheat Sheet" lower in the file is now explicitly marked **historical** (the deferral note that pointed at `~/.claude/CLAUDE.md` is gone).
+
+### Why
+- Decided 2026-06-18: homelab current-state was drifting across 3 docs because `/log` wrote to cwd, not the owning dir. Fix = one current-state home (here) + locale-aware `/log` (Step 0). Global `~/.claude/CLAUDE.md` keeps only a quick-ref + pointer; `~/.claude/docs/homelab.md` + `docs/homelab/` stay as deep reference.
+
+### Files modified
+- `CLAUDE.md` — new authoritative "Operational Current State" section (209→277 lines); old 192.168.2.x tables demoted to historical.
+- (Cross-repo: global `~/.claude/CLAUDE.md` slimmed + `commands/log.md` Step 0 routing — logged in `~/.claude/docs/changelog.md`.)
+
+---
+
 ## 2026-06-15 - PC watchdog 3-tier finished (Tier-2 published) + Elevated Twingate HA connector pair
 
 ### Outcome
