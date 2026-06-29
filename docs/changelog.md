@@ -1,5 +1,73 @@
 # HomeLab Project Changelog
 
+## 2026-06-28 - Pixelbook Go: CachyOS rolling upgrade, DNS-hijack fix, static `.247`, Hyprland 0.55 + GRUB/console fonts
+
+### Context
+- Goal was "update Go to newest CachyOS." CachyOS is **Arch-based rolling** — no release versions; "newest" = `pacman -Syu`. Last full upgrade was 2026-03-10 (~3.5-month gap → keyring-first + multi-mirror hazards).
+- Go = Pixelbook 2019, CachyOS via SeaBIOS Legacy (ctrl-L → 1 at firmware). Reached over Tailscale (`100.114.126.32`), so all fixes below were doable headless even while LAN DNS was broken.
+
+### DNS hijack (root cause of the failed first `-Syu`)
+- First `-Syu` died at `cachyos-v3.db failed to download`. Not the CDN — **Go's resolver was dead**. `getent` hung; `resolv.conf` = `127.0.0.53` (systemd-resolved stub) but resolved wasn't forwarding.
+- **Root cause:** Go runs a Twingate connector (`sdwan0`). That link claimed `~.` (authoritative for ALL domains) + default route, pointing at Twingate's **dead `100.95.0.251-254` resolvers** — the *same disease book5 hit* 3× (changelog 2026-05-20/27). pihole `.248` answered fine on direct query; the hijack starved every system lookup.
+- **Fix (book5's proven remedy):** `sudo nmcli con mod sdwan0 ipv4.dns 192.168.68.248 ipv4.ignore-auto-dns yes && sudo nmcli device reapply sdwan0` → resolved's sdwan0 link now forwards to pihole → resolution restored. (A failed `tailscale set --accept-dns=false` attempt en route — see book5 scare below.)
+- **Persistence caveat:** a Twingate client update can revert the sdwan0 DNS (book5 needed a dispatcher hook). If Go's DNS breaks again, re-run the pin. Better long-term: Go is on Tailscale (5/27) and may not need the Twingate connector at all — killing it removes the whole failure mode (deferred).
+
+### Static IP `.247` (client-side)
+- New router (TP-Link **Archer**) DHCP pool = `192.168.69.0`–`192.168.71.254`; the entire `192.168.68.x` zone is **outside the pool** = free for static pins (where book5 `.250`, tower `.249`, pihole `.248` already sit). **No router reservation needed** — set it client-side.
+- Go pinned via NetworkManager (Wi-Fi conn "Spaceballs"): `ipv4.method manual`, `192.168.68.247/22`, gw `192.168.68.1`, DNS `192.168.68.248`, `ignore-auto-dns yes`, plus `802-11-wireless.cloned-mac-address permanent` (MAC randomization would dodge any future reservation). Survives router swaps.
+- **`.247` was the Mac's documented slot** — but the Mac actually roams on DHCP (was at `.71.82`), never statically held `.247`. Reassigned to Go; network table updated (Go=.247 static, Mac=roaming).
+
+### Upgrade
+- After DNS fix: `cachyos-rate-mirrors` → keyring-first (`pacman -Sy archlinux-keyring cachyos-keyring`) → `pacman -Syu` (721 pkgs, 2.4 GiB).
+- **4× `404` from `cdn77.cachyos.org`** (gcc/glibc/lib32-gcc-libs/ttf-dejavu) — CDN file-sync lag, not fatal: pacman's **multi-mirror fallback** re-fetched them from krfoss/us mirrors and committed cleanly. (Misjudged this mid-run as an abort — it had already moved to post-install hooks. pacman is atomic: partial *download* failure that recovers via other mirrors still installs; only an unrecoverable retrieval aborts with zero changes.)
+- Booted new **LTS `6.18.37-1-cachyos-lts`** (GRUB defaulted to LTS on its own). Main kernel also installed (`linux-cachyos 7.1.2`) but LTS preferred for the quirky Pixelbook + headless reliability. Old `6.18.16` stays in GRUB as fallback.
+- **7 `.pacnew`** — all resolved by keeping the live versions (mirrorlists = rate-mirrors-ranked > stock defaults; `mkinitcpio.conf` live has `plymouth`+`resume` hooks the default drops; locale/resolv.conf inert). Backed up to Mac `~/projects/homeLab/backups/go-pacnew-20260628.tar.gz`, then deleted from Go. Initramfs rebuilt clean from the *good* config before reboot.
+
+### Hyprland 0.55 breaking changes
+- Boot showed 2 red config errors: `dwindle:pseudotile does not exist` (l.195) + `Invalid dispatcher "togglesplit"` (l.262).
+- Fixes: `pseudotile` was **removed in 0.55** (no-op; pseudotiling now per-window via the `pseudo` dispatcher, already bound) → commented out. `togglesplit` is **no longer a direct dispatcher since 0.54** → `bind = $mainMod, J, layoutmsg, togglesplit`. Backup `hyprland.conf.bak-20260628`. Reloaded remotely via `XDG_RUNTIME_DIR=/run/user/1000 HYPRLAND_INSTANCE_SIGNATURE=<sig> hyprctl reload` (signature pulled from `/run/user/1000/hypr/`); `configerrors` now empty.
+
+### Readable boot text (GRUB too small to pick a kernel on the HiDPI panel)
+- **GRUB menu:** `grub-mkfont -s 32 -o /boot/grub/fonts/dejavu32.pf2 /usr/share/fonts/TTF/DejaVuSansMono.ttf` + `GRUB_FONT=` in `/etc/default/grub` + `grub-mkconfig` (verified `loadfont` line in grub.cfg). GRUB loads its own font early — no waiting on a later boot stage. The pre-GRUB SeaBIOS/ctrl-L prompt is firmware, unchangeable.
+- **Post-GRUB console:** `/etc/vconsole.conf` → `FONT=latarcyrheb-sun32` (16×32), applied early via the `sd-vconsole` initramfs hook (`mkinitcpio -P`). Both effective next boot.
+
+### book5 scare (accidental, fully reverted)
+- The `tailscale set --accept-dns=false` meant for Go was run while SSH'd into **book5** by mistake. Harmless: book5 is wired (no Wi-Fi/"Spaceballs"), and its `resolv.conf` is pihole-pinned via `sdwan0` regardless — DNS never broke. Restored `--accept-dns=true`; verified sdwan0 pihole pin intact, twingate-connector active, Tailscale online, VM running. One cosmetic drift: Wi-Fi radio left `enabled` (device `wlo1` disconnected, no route) — left as-is pending confirmation of its prior state.
+
+### Files modified
+- `CLAUDE.md` (homeLab) — network table: Go row → `.247` static + CachyOS; Mac row → roaming/DHCP.
+- On Go: `/etc/NetworkManager` (Spaceballs static + sdwan0 DNS pin), `/etc/default/grub`, `/boot/grub/fonts/dejavu32.pf2`, `/etc/vconsole.conf`, `~/.config/hypr/hyprland.conf`.
+- Mac: `~/projects/homeLab/backups/go-pacnew-20260628.tar.gz` (7-file `.pacnew` backup).
+
+---
+
+## 2026-06-21 - Network-wide ad-blocking restored: Deco DHCP DNS field went blank after the outage
+
+### What happened
+- **Symptom:** ads everywhere (phone mid-game, Mac), pihole screen black → first guess "pihole down." Pihole was fine — clients just weren't pointed at it.
+- **Root cause:** the 2026-06-19 outage fried the Spectrum modem. New modem + Deco re-setup **wiped the Deco's DHCP-Server → Primary DNS field** (had been pihole `192.168.68.248`). Blank field → Deco handed clients its WAN-learned **ISP DNS `209.18.47.63/.61`** (CenturyLink/Lumen) → zero blocking on every DHCP client. Statically-DNS'd infra (book5, tower, VM101, cameras) kept blocking.
+- **Proof:** pihole FTL DB (`/etc/pihole/pihole-FTL.db`) per-client last-seen showed ~20 clients flatline at **06-19 ~07:21:34** (single-second mass cutoff = power event), survivors = only the static-DNS boxes. Daily query volume had *climbed* across the 5/27 TG→TS cutover — exonerating the cutover.
+
+### Ruled out
+- TG→TS cutover (no cliff at 5/27), Deco cloud-config wipe (config intact), double-NAT (Deco WAN = public Spectrum IP `68.203.135.83` → modem confirmed **bridge mode**), the March Mac Wi-Fi `8.8.8.8` hardcode (separate jadedViber-launch workaround; cleared this session anyway).
+
+### Fix (Deco app — must be on home Deco Wi-Fi to edit; on Tailscale, Deco thinks you're remote → settings go read-only)
+1. **DHCP Server** → **Primary DNS = `192.168.68.248`**, Secondary **blank** (public secondary = bypass leak). ← the lever.
+2. **Internet → IPv4 (WAN) DNS** → leave **Auto**. Deco *rejects* a LAN IP here ("This IP conflicts with the LAN IP subnet… set it at DHCP Server") — pihole belongs in DHCP only.
+3. **IPv6 → Off** (confirmed) — else v6 lookups leak past pihole.
+
+### Confirmed good state
+- DHCP now hands `.248`; `dig doubleclick.net` → `0.0.0.0`, `github.com` resolves. Tailscale MagicDNS (`100.100.100.100`, resolver #1) is transparent — forwards public lookups to DHCP DNS = pihole.
+- **pihole `.248` is static** (required — it sits inside the DHCP pool `.50`–`192.168.71.250`; non-static would risk it being handed out and breaking DNS).
+- Clients pick up the fix on DHCP renew (~2hr lease) or Wi-Fi reconnect.
+
+### Notes
+- pihole = Raspberry Pi 2 Model B (2015) — slow. FTL DB analysis: stream to a fast box (`ssh pihole "sudo cat /etc/pihole/pihole-FTL.db" > /tmp/x.db`, then local sqlite3); **skip `-C`** on the Pi 2 (A7 CPU can't gzip at line rate — raw cat over 100Mb wins; the `-C` pull took 3:28 for 294MB).
+- Stale SSH alias: memory claimed `s25-tunnel` exists; `~/.ssh/config` only has `s25` / `s25-home` / `s25-work`. Phone's home DHCP IP drifts (landed on `.59` after dropping TS) — `s25-home` `.200` is stale.
+- Memory: brain `deco-dhcp-dns-pihole` (id 630424).
+
+---
+
 ## 2026-06-19 - Power outage: mesh AP fried, CT102 retired, VM101 unhealthy
 
 ### What happened

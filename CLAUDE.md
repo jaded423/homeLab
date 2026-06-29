@@ -57,13 +57,13 @@ This project documents the research, planning, and setup of an affordable but po
 | SSH (magic-pihole) | 192.168.68.248 | `ssh pihole` |
 | PetCam (Tapo) | 192.168.68.75 | Frigate on VM 101 |
 | Porch (Tapo) | 192.168.68.76 | Frigate on VM 101 |
-| SSH (Pixelbook Go) | - | `ssh go` / `ssh go-local` |
+| SSH (Pixelbook Go) | 192.168.68.247 | `ssh go` (Tailscale) / `ssh go-local`. **Static 2026-06-28** — client-side NM (`/22`, gw `.1`, DNS→pihole `.248`). CachyOS rolling. |
 | SSH (Windows PC) | - | `ssh pc` / `ssh pc-local` |
 | SSH (WSL Ubuntu) | - | `ssh wsl` / `ssh wsl-local` |
 | SSH (S25 Ultra/Termux) | - | `ssh s25` (mDNS) / `ssh s25-{home,work,tunnel}` |
 | SSH (Tablet S9 FE) | 192.168.68.50 | `ssh s9` / `ssh s9-local` (on-demand tunnel) |
 | SSH (S10+) | 192.168.68.73 | `ssh s10` / `ssh s10-local` (on-demand tunnel) |
-| SSH (Mac) | 192.168.68.247 | `ssh mac` / `ssh mac-local` |
+| SSH (Mac) | 192.168.69.222 | `ssh mac` / `ssh mac-local`. **Reserved 2026-06-28** — Archer DHCP reservation → **hardware MAC `2C:CA:16:05:C8:72`** (Private Wi-Fi Address OFF for Spaceballs SSID, else the rotating MAC breaks the reservation). In-pool (.69–.71) reservation; roams on DHCP elsewhere. *(was docs'd `.247`; that's Go now.)* |
 | SSH (Pi1 @ Elevated) | 100.98.16.63 | `ssh pi1` (Tailscale, stable regardless of which host's ICS) |
 | Samba | — | RETIRED 2026-05-27 (smbd disabled on book5; was unused, `/root` share security smell) |
 | Homelable (CT 103) | 192.168.68.61 | UI :3000 (admin/admin), MCP :8001. Native install on book5/vmbr1, scans 192.168.68.0/22 |
@@ -92,6 +92,8 @@ This project documents the research, planning, and setup of an affordable but po
 **Tailnet**: All homelab + roaming devices are on Tailscale **except VM101/ubuntu** (removed 2026-06-19 — Mullvad lockdown walls it off; reach via ProxyJump tower). Use the 100.x IP or hostname (MagicDNS) when ICS/LAN IPs are unstable. See `~/.claude/docs/homelab.md` for the full tailnet roster.
 
 **Network Note**: Router migration (Feb 2026) moved from dual-subnet (192.168.2.x/192.168.1.x) to single 192.168.68.0/22. Both Proxmox nodes now on 2.5 GbE primary interfaces (vmbr1). vmbr0 exists on book5 but is inactive.
+
+**DNS / ad-blocking (current state, 2026-06-21)**: Network DNS = pihole `192.168.68.248`, handed to all clients via **Deco app → DHCP Server → Primary DNS** (Secondary blank; IPv6 OFF). NOT the WAN/IPv4 DNS field — Deco rejects a LAN IP there. Pihole `.248` is static (sits inside DHCP pool `.50`–`71.250`). Spectrum modem is in **bridge mode** (Deco WAN = public IP, no double-NAT). If ads return network-wide, check that DHCP-Server Primary DNS field is still `.248` first — it blanked during the 2026-06-19 outage/modem swap (see changelog 2026-06-21 + brain `deco-dhcp-dns-pihole`). Tailscale MagicDNS (`100.100.100.100`) is transparent, forwards to DHCP DNS = pihole.
 
 ### Book5 Watchdog Services (contain hardcoded IPs — update if subnet changes)
 - `/usr/local/bin/network-health-monitor.sh` — **v2.1** (2026-05-20): Graduated escalation with rate-limiting. Socket issues restart TW client only (never NM). NM restart only on true isolation (both internet AND peers down, 6+ consecutive failures). Now also probes DNS resolution (`check_dns`) — if DNS fails while inet+peers are OK, logs `action=dns_broken` (no auto-remediation). JSON state file at `/var/lib/network-health-monitor/state.json`. Logs: `journalctl -t net-health`. Backup of pre-2026-05-20 version at `/usr/local/bin/network-health-monitor.sh.bak-2026-05-20`

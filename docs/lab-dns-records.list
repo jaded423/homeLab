@@ -1,0 +1,43 @@
+# Lab Local DNS records — git-tracked source of truth for pihole Local DNS
+# ---------------------------------------------------------------------------
+# Format: "<IP>  <hostname>" (one per line) — matches pihole v6
+# /etc/pihole/hosts/custom.list and the Settings → Local DNS Records UI.
+#
+# WHY: gives every infra host a stable .lab name independent of the router's
+# cosmetic client labels (Deco names are cosmetic; Archer/OPNsense later).
+# Seeded from docs/deco-device-naming.md (fixed-MAC infra only — MAC-randomized
+# phones/tablets/IoT omitted, their IPs drift).
+#
+# APPLY (pihole @ 192.168.68.248):
+#   1. UI: Settings → Local DNS Records → add each line, OR
+#   2. CLI: copy these lines into /etc/pihole/hosts/custom.list then
+#      `pihole reloaddns` (or restart FTL). Back up the file first.
+# After applying: `dig book5.lab @192.168.68.248 +short` → 192.168.68.250
+#
+# Keep this file in sync when IPs change. Pair with DHCP reservations once
+# pihole owns DHCP (Archer DHCP off — Phase 2.0) so IP == name == lease.
+# ---------------------------------------------------------------------------
+
+# Proxmox / infra
+192.168.68.250  book5.lab
+192.168.68.249  tower.lab
+192.168.68.248  pihole.lab
+
+# VMs
+192.168.68.100  omarchy.lab
+192.168.68.101  ubuntu.lab
+192.168.68.111  home-assistant.lab
+192.168.68.111  ha.lab
+
+# Containers / appliances
+192.168.68.61   homelable.lab
+
+# Cameras (Frigate on VM101)
+192.168.68.75   petcam.lab
+192.168.68.76   porch.lab
+
+# Gateway (Deco now / Archer after Friday 2026-06-26 cutover — IP unchanged .1)
+192.168.68.1    gateway.lab
+
+# Trusted client (wife laptop — pihole bypass group; real MAC, won't rotate)
+192.168.68.59   wife-laptop.lab
