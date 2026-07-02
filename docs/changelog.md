@@ -1,5 +1,28 @@
 # HomeLab Project Changelog
 
+## 2026-07-02 - VM101 sermon transcription pipeline + IPv6 disabled
+
+### What changed
+- **IPv6 disabled on VM101** (`/etc/sysctl.d/99-disable-ipv6.conf`): `disable_ipv6=1` + `accept_ra=0` on `enp6s18` + default; loopback `::1` kept. Removes the router-RA ULA (`fd24:…`) so outbound uses IPv4.
+- **Whisper transcription stack on VM101** (`~/docker/whisper`): `local/faster-whisper` image (python:3.11-slim + faster-whisper 1.1.1 + requests + nvidia-cublas/cudnn-cu12), on-demand `docker compose run` (profile `manual`). Model **distil-large-v3, CPU int8, 24 threads, beam 1 ≈ 4.1× realtime**. `yt-dlp` standalone at `~/.local/bin/yt-dlp`.
+- **p10k prompt** (`~/.p10k.zsh`): dropped `time` (current clock), added custom `cmd_start` segment (command start time; pairs with `command_execution_time`).
+
+### Why
+- IPv6-through-Mullvad tarpitted the Debian mirror at ~52 KB/s (build/download crawl); IPv4-through-Mullvad = 5.4 MB/s. Disabling v6 makes it deterministic and matches the router (v6 off).
+- Sermon → transcript engine feeding the Mac `trans -sermon` Obsidian study-aid tool (see scripts changelog).
+
+### Technical notes
+- **GPU whisper walled by Maxwell**: M4000 (compute 5.2, driver 535) — ct2 4.8.0 + cuDNN 9 reject fp16 (no fast FP16) + int8 (no DP4A); fp32 crashes at encode (no sm_52 kernels). CPU-only. distil-large-v3 ≈ large-v3 quality at ~4× speed. Same Maxwell EOL as NVENC (2026-06-05).
+- ct2 `cpu_threads=0` caps at ~4 threads (set explicitly); even at 24, autoregressive decode caps effective use ~5 cores (algorithmic).
+- `99-disable-ipv6.conf` hardcodes iface `enp6s18` — update if NIC changes.
+
+### Files modified
+- VM101 `/etc/sysctl.d/99-disable-ipv6.conf` (new)
+- VM101 `~/docker/whisper/{Dockerfile,docker-compose.yml,transcribe.py}` + `local/faster-whisper` image
+- VM101 `~/.local/bin/yt-dlp` (new), `~/.p10k.zsh` (cmd_start segment)
+
+---
+
 ## 2026-06-28 - Pixelbook Go: CachyOS rolling upgrade, DNS-hijack fix, static `.247`, Hyprland 0.55 + GRUB/console fonts
 
 ### Context
