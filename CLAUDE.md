@@ -1,5 +1,7 @@
 # CLAUDE.md — homeLab
 
+> **Stack:** Tier-1 meta hub. Parent/router: [global](~/.claude/CLAUDE.md). Hosts (component pages in `wiki/`): book5 · tower · vm100-omarchy · vm101-ubuntu · vm111-homeassistant · pihole · pi1 · + roaming device fleet.
+
 Two-node Proxmox cluster (book5 + tower) + VMs + a roaming device fleet, on the
 `192.168.68.0/22` LAN. Runs local LLMs, media/services, home automation, and doubles as
 the family's zero-trust network hub (Tailscale + Twingate + pihole). This repo is the
