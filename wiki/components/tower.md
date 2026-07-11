@@ -1,8 +1,22 @@
 ---
 type: component
-title: tower (prox-tower)
-tags: [proxmox, node, host, gpu, nfs, media]
-related: [book5, vm101-ubuntu, vm111-homeassistant, gpu-passthrough, watchdogs, access-model, network-topology, storage]
+title: tower (Proxmox Node 2)
+tags:
+  - proxmox
+  - node
+  - host
+  - gpu
+  - nfs
+  - media
+related:
+  - book5
+  - vm101-ubuntu
+  - vm111-homeassistant
+  - gpu-passthrough
+  - watchdogs
+  - access-model
+  - network-topology
+  - storage
 host: tower
 ip: 192.168.68.249
 ---

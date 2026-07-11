@@ -65,7 +65,8 @@ This page owns the full VM101 service list. Ports, purpose, and compose location
 | **CodeProject.AI** | 32168 | docker | — | **Stopped** |
 | **steam-headless** | 8083 (web desktop), 47990 (Sunshine) | docker | — | Game-stream rig (`josh5/steam-headless`), uses the passed-through M4000; NVENC walled by Maxwell EOL → software x264 |
 | **whisper** | on-demand | docker | `~/docker/whisper` | `local/faster-whisper` CPU transcription (`docker compose run` profile `manual`; distil-large-v3 int8 24-thread ≈ 4.1× realtime; GPU walled by Maxwell → CPU-only). Feeds the Mac `trans -sermon` tool |
-| **Odoo** | 8069 | docker | `~/docker/odoo/` | Business ERP (+ `odoo-db` PostgreSQL) |
+| **Odoo** | 8069 | docker | `~/docker/odoo/` | Business ERP — **test/staging** instance (Odoo 17, matches work). `odoo-db` PostgreSQL 15 |
+| **Odoo (personal/finance)** | 8070 | docker | `~/docker/odoo-personal/` | **Personal expense tracking** — Odoo 19 Community + OCA (`account_financial_report`, `web_responsive`), `odoo-db-personal` PostgreSQL 16. Fully isolated from the 8069 test stack (own network/DB, no shared data). Owned by the [finance project](~/projects/personal/finance/CLAUDE.md); secrets in the box `~/docker/odoo-personal/.env` (gitignored) |
 | **Gitea** | 3001 (web), 2223 (ssh) | docker | `~/docker/gitea/` | Self-hosted git mirror; the weekly `push-all` skill pushes here (16 repos) alongside GitHub + Pi1 |
 | **ClamAV** | — | docker | `~/docker/` | Antivirus scanning |
 | **Portainer** | 9000 | `docker run` | — | Docker management UI |

@@ -1,8 +1,18 @@
 ---
 type: component
-title: pihole (magic-pihole)
-tags: [raspberry-pi, dns, pihole, unbound, qdevice, host]
-related: [dns-adblocking, access-model, book5, tower]
+title: pihole (Proxmox qDevice, for quorum)
+tags:
+  - raspberry-pi
+  - dns
+  - pihole
+  - unbound
+  - qdevice
+  - host
+related:
+  - dns-adblocking
+  - access-model
+  - book5
+  - tower
 host: pihole
 ip: 192.168.68.248
 ---

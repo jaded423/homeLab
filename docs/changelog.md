@@ -1,5 +1,28 @@
 # HomeLab Project Changelog
 
+## 2026-07-03 - btop GPU panel enabled on VM101 (M4000 readout)
+
+### What changed
+- **GPU-enabled btop on VM101 (ubuntu)**: source-built btop **1.4.7** with `make GPU_SUPPORT=true CXX=g++-14`, installed to **`/usr/local/bin/btop`**. **Removed the old snap btop** (`sudo snap remove btop`) — `/snap/bin` preceded `/usr/local/bin` in the *login-shell* PATH, so the snap (GPU_SUPPORT=false) was shadowing the new binary and the GPU box didn't appear; removing it makes `/usr/local/bin/btop` the sole btop. btop's GPU box now renders the **Quadro M4000** live — util / vram / temp / clocks (verified via tmux `capture-pane`: `Quadro M4000`, ~1% util, 54°C, 400 MiB vram, 772/3004 MHz). Installed **`g++-14`** (14.2.0, noble-updates/universe) as a build dep.
+- Surveyed btop build flag + GPU visibility on all 4 hosts (ubuntu, omarchy, tower, book5) — only VM101 needed the fix.
+
+### Why
+- Installed btop reported `GPU_SUPPORT=false` → no GPU panel, even though `nvidia-smi` sees the M4000 (driver 535.309.01) and ollama holds VRAM. Goal: a GPU panel wherever a real GPU is visible.
+
+### Technical notes / gotchas
+- **The official btop static release ships `GPU_SUPPORT=false`.** Only asset now is `btop-x86_64-unknown-linux-musl.tar.gz`, and musl-static can't `dlopen` glibc's `libnvidia-ml.so` → upstream disables GPU in it. Grabbing the release binary does NOT fix this; a **source build** (dynamic, GPU_SUPPORT=true default) that dlopens `libnvidia-ml.so.1` at runtime is required.
+- **btop 1.4.7 needs g++ ≥ 14** (uses C++23 `std::ranges::to`). VM101's stock g++-13.3 fails with `'to' is not a member of 'std::ranges'`. Fix: `apt install g++-14` + `make CXX=g++-14`.
+- **Per-host GPU reality** (why only VM101 got a panel):
+  - **omarchy (VM100)** — has `GPU_SUPPORT=true` (pacman build) + book5's Lunar Lake **Intel Arc iGPU via passthrough**, BUT **no GPU panel renders**: the card uses the newer **`xe`** kernel driver, and btop 1.4.7's Intel readout only supports **`i915`** (no `gt_*`/engine busy sysfs on `xe`). Forcing `gpu0` into `shown_boxes` still shows nothing — btop drops it. Nothing to fix until btop gains `xe` support. (Earlier assumption that omarchy "already shows the box" was wrong — never verified.)
+  - **tower** — M4000 is **vfio-bound** (passed through to VM101); host has no other GPU → NVML/panel can't see it. btop still 1.3.2. Expected empty; left as-is (user chose ubuntu-only).
+  - **book5** — its iGPU is fully **passed through to omarchy**, so host `/sys/class/drm` has **no card** at all → no panel possible. btop still 1.3.2. Left as-is.
+
+### Files modified
+- `VM101:/usr/local/bin/btop` — new GPU-enabled 1.4.7 binary (source-built)
+- `VM101` — `g++-14` package installed (build dep)
+
+---
+
 ## 2026-07-02 - VM101 sermon transcription pipeline + IPv6 disabled
 
 ### What changed

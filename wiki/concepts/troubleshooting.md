@@ -318,3 +318,17 @@ docker-compose up -d
 - `~/.claude/docs/homelab/troubleshooting.md` (deep doc — migrated)
 - `~/.claude/docs/homelab/setup-guides.md` (deep doc — folded into Setup recipes)
 - `~/projects/homeLab/CLAUDE.md` lines 45–119 (Operational Current State, authoritative — retirements, current IPs, watchdog/GPU/DNS ownership)
+
+## tmux detach storm (2026-06-12, unsolved)
+
+point4 client detached every couple seconds for several minutes, then stopped on its own. **Ruled out:** the Claude session inside point4 (zero tmux refs in transcript), tmux-resurrect backup agent, cron, Music/Hammerspoon relaunch loop, rogue tmux processes (live sampler clean). Not the 2026-02-27 background-process incident pattern.
+
+**If it recurs:** check `/tmp/tmux-detach.log` for timestamps (the detach-logger hooks are left armed but die with a tmux server restart — re-arm below); check Ghostty tab health (a client SIGHUP looks identical to a detach from inside tmux); note what each Claude window was doing.
+
+```bash
+# Re-arm tmux detach logger (after any tmux server restart)
+tmux set-hook -g client-detached 'run-shell "echo \"$(date +%H:%M:%S) detached: #{hook_client} session=#{hook_session_name}\" >> /tmp/tmux-detach.log"'
+tmux set-hook -g client-attached 'run-shell "echo \"$(date +%H:%M:%S) attached: #{hook_client}\" >> /tmp/tmux-detach.log"'
+```
+
+Tracked as an open item in `~/projects/homeLab/TODO.md`. (Migrated out of global `~/.claude/CLAUDE.md` 2026-07-07 by `/sum` one-home audit.)
