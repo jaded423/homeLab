@@ -16,9 +16,18 @@ structured IP scheme. Reachability (SSH/Tailscale/Twingate) → [[access-model]]
 
 - **Subnet:** `192.168.68.0/22` — a single unified network (one flat L2/L3 domain).
 - **IP scheme:** `250s` = Proxmox / infra · `100s` = VMs · `70s` = Cameras / IoT.
-- **DHCP pool:** `.50`–`71.250` (handed by the Deco). Infra hosts (`.248`–`.250`) sit
-  inside the pool but are pinned via **Address Reservation** so they never drift — pihole
-  `.248` especially, or DNS vanishes network-wide.
+- **DHCP pool:** `192.168.69.0`–`192.168.71.254` (handed by the Deco).
+- **Static space = `192.168.68.x`** — *outside* the DHCP pool. The Deco can never hand out a
+  `.68.x` address, so **statics cannot collide with DHCP** and need no Address Reservation.
+- **Statics are set PER-MACHINE (client-side), not at the router.** Each host pins its own
+  `.68.x` in its own network stack (NM/nmcli, `ha network update`, ONVIF for the Tapo cams).
+  There is no router-side reservation to check — if a `.68.x` host drifts, the fix is on the
+  *host*, not the Deco.
+- **Corollary — the drift signature:** any host left on DHCP (`ipv4.method: auto`) gets pulled
+  into `.69`–`.71` and vanishes from its expected `.68.x`. That is a *host misconfig*, not a
+  network fault. Seen on [[vm111-homeassistant]] 2026-07-16 (`.68.111` → `.71.49`).
+- **Reservations** are only meaningful for hosts that intentionally live *in* the pool
+  (e.g. [[mac]] at `.69.222`).
 
 ## Master device / IP table
 

@@ -55,6 +55,7 @@ per-node docs in `~/.claude/docs/homelab/` were folded in here (2026-07-06).
 | [[watchdogs]] | book5 net-health/cpu watchdogs, tower crash instrumentation + kernel pin, VM101 Frigate autoheal. |
 | [[storage]] | VM101 media tiers, 3.2T NFS pool, scan-and-move pipeline, Google Drive integration. |
 | [[gpu-passthrough]] | M4000 → VM101, Intel Arc iGPU → VM100; Maxwell-EOL NVENC wall. |
+| [[vaultbot]] | Secret-broker design thought-experiment: attestation vs bearer-hash, device binding, LLM-as-approver landmine, floors/ceilings of the Mac-single-point-of-failure threat model. |
 | [[troubleshooting]] | Recurring problems + fixes + setup recipes not owned by one host. |
 | [[history]] | Origin, pre-migration 192.168.2.x topology (archaeology), hardware/budget, version history. |
 

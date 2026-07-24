@@ -172,6 +172,12 @@ One-line summaries below; full escalation logic + logs → [[watchdogs]].
 - **`rsyslog`** (UDP 514) — receives tower's full syslog → `/var/log/tower-remote.log`
   (`/etc/rsyslog.d/10-receive-from-tower.conf`). Tail after a tower hang to see last
   messages before a crash.
+- **`tower-watchdog.timer`** (2026-07-20) — first-line auto-heal for [[tower]]: probes it on
+  LAN + Tailscale, and after ~15 min down power-cycles tower's Tapo P105 (`192.168.69.178`) via
+  python-kasa (`/opt/tower-watchdog/`, no IFTTT). **tower's PRIMARY recovery** — its iTCO
+  hardware watchdog is BIOS-locked. ntfy alerts + 2-cycle cap. Full detail → [[watchdogs]].
+- **Tower flight-recorder sink** (2026-07-20) — `/var/log/tower-flightrec.log` receives tower's
+  3s state stream (ring-buffered ~1 week); the pre-freeze autopsy channel. → [[watchdogs]].
 
 ### Reverse tunnels (roaming devices)
 

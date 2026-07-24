@@ -18,7 +18,7 @@ smart devices, a Frigate integration, MQTT, and the porch-cam watchdog-notify au
 |---|---|
 | VM ID | 111 (on tower) |
 | OS | Home Assistant OS |
-| IP | 192.168.68.111 |
+| IP | 192.168.68.111 — **static, pinned in-guest** (see below) |
 | SSH | `ssh ha` — ProxyJump [[tower]] (jump rides Tailscale; tower bare alias = TS) |
 | Web UI | Twingate only (Mullvad/LAN-only) — see [[access-model]] |
 | Bridge | 2.5G `vmbr1` on tower (see below) |
@@ -43,6 +43,29 @@ Full watchdog detail lives in [[watchdogs]]; Frigate itself is on [[vm101-ubuntu
 
 ## Networking
 
+- **Static `192.168.68.111/22`, pinned INSIDE the guest** (2026-07-16). Per the
+  [[network-topology]] rule, `.68.x` is static space the Deco's DHCP pool (`.69.0`–`.71.254`)
+  cannot reach — so the pin lives on the host, not the router. Guest iface `enp6s18`,
+  Supervisor-managed NM profile `Supervisor enp6s18`:
+  ```bash
+  ha network update enp6s18 --ipv4-method static \
+    --ipv4-address 192.168.68.111/22 --ipv4-gateway 192.168.68.1 \
+    --ipv4-nameserver 192.168.68.248 --ipv4-nameserver 192.168.68.1
+  ha network info          # verify: method: static
+  ```
+  Use `ha network update`, **not bare `nmcli`** — the Supervisor owns the profile and will
+  fight/overwrite a raw nmcli edit.
+- **GOTCHA — the DHCP-drift outage (2026-07-16):** HA OS shipped on `ipv4.method: auto`, so
+  `.68.111` was never actually pinned; it held by lease luck for months, then a renewal moved it
+  to `.71.49`. Symptom looks like a dead VM (no ping, no web UI, `ssh ha` "No route to host")
+  but `qm status` says `running` — **and the guest agent still answers**, because it rides
+  virtio-serial, not the network. Diagnose from tower without needing the network:
+  ```bash
+  qm agent 111 ping                      # alive?
+  qm agent 111 network-get-interfaces    # what IP does it ACTUALLY have?
+  ```
+  Distinct from the [[tower]] tap-stranding bug — there `tap111i0` is on the wrong bridge; here
+  the tap is correctly on `vmbr1` and the guest is simply at a different address.
 - VM 111 sits on tower's **2.5G `vmbr1`** (`enp2s0`, r8169), merged there with VM101 during the
   2026-06-19 post-outage cable reroute.
 - **GOTCHA**: the runtime fix (`ip link set tapNi0 master vmbr1`) is runtime-only. VM net0

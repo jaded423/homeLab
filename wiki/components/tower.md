@@ -173,6 +173,18 @@ book5 receiver, and pstore forensics → [[watchdogs]].
 - **pstore** mounted at `/sys/fs/pstore` (in `/etc/fstab`) — panic logs survive reboot as
   `dmesg-*` files.
 - `lm-sensors` installed (cores ~45 °C idle, NIC PHY ~60 °C; thresholds 92/120 °C).
+- **Flight recorder (2026-07-20):** `tower-flightrec.service` streams live state (load, PSI,
+  D-state tasks, top-CPU, temp) every 3s to [[book5]] `/var/log/tower-flightrec.log`
+  (ring-buffered ~1 week) — the pre-freeze autopsy data the panic-only setup never captured
+  (the silent hangs leave pstore empty). → [[watchdogs]].
+- **`hung_task_panic=1`** (`/etc/sysctl.d/99-tower-hungtask.conf`) — a stuck D-state task now
+  panics + dumps, complementing the softlockup/hardlockup knobs (which never fire on these hangs).
+- ⚠️ **iTCO hardware watchdog is BIOS-locked (dead end):** `iTCO_wdt` can't reset the
+  `NO_REBOOT` flag on this Lenovo P510 (no BMC), so tower can't self-reboot in hardware.
+  Recovery is [[book5]]'s **Tapo P105 plug-cycle** (`192.168.69.178`, via `tower-watchdog.timer`).
+- **2026-07-19 hang:** froze 15:26 after 16 d uptime on the pinned kernel; pstore empty again,
+  journal stopped mid-stream, found ~3.5 h later via blank Frigate. The pin **reduced** frequency
+  (1–3 d → 16 d) but did not eliminate it — root cause remains invisible / hardware-level.
 
 ⚠️ **Do NOT try netconsole on tower** — netpoll on the bridge silently fails on this
 hardware/kernel combo (kernel says "network logging started" but no packets hit the wire,

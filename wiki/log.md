@@ -37,3 +37,12 @@ collapse of the two homelab doc locations into this repo**:
 
 Zero facts invented — reorganization + relocation of existing content. Deep planning docs
 (build-plan, ceph guide, research, etc.) left as long-form under `../docs/` (Tier-2).
+
+## [2026-07-20] add | tower silent-hang recovery stack + iTCO dead-end → [[watchdogs]], [[tower]], [[book5]]
+
+Documented the new self-heal/forensics mechanisms into [[watchdogs]] (+ host pages): tower
+**flight recorder** (state → book5, ring-buffered), **`hung_task_panic=1`**, and the book5
+**`tower-watchdog.timer`** that power-cycles tower's Tapo P105 at `192.168.69.178` locally via
+python-kasa (no IFTTT). Recorded the **iTCO dead-end** — the chipset hardware watchdog is
+BIOS-locked (`NO_REBOOT`) on the Lenovo P510, no BMC — so book5→Tapo is tower's primary recovery.
+Event/forensics detail → `../docs/changelog.md`.

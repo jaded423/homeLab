@@ -47,6 +47,14 @@ node deleted from the tailnet; Mullvad lockdown always showed it offline and acc
 never via Tailscale anyway. Web UIs for VM101 apps stay on **Twingate** (Mullvad/LAN-only,
 not MagicDNS). Full model → [[access-model]].
 
+> **Both Odoos share one Twingate resource** ("Odoo", addr `192.168.68.101`, alias
+> `odoo.lab`, TCP ports **`8069-8070`**): `odoo.lab:8069` = test/business, `odoo.lab:8070`
+> = personal/finance (same host, different container ports). To expose a new port, widen
+> that resource's TCP range in the TG admin console — **not** a DNS/alias change. **Gotcha:**
+> after a port change the TG *client* caches the old policy and returns `ERR_CONNECTION_REFUSED`
+> (an active refuse, not a timeout) on the new port — quit/relaunch the client (or just re-hit
+> the URL) to force a policy re-pull. The direct IP `192.168.68.101:8070` bypasses TG entirely.
+
 ## Service inventory
 
 This page owns the full VM101 service list. Ports, purpose, and compose location:

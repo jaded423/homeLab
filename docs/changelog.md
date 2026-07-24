@@ -1,5 +1,71 @@
 # HomeLab Project Changelog
 
+## 2026-07-20 - Tower silent-hang recovery stack: iTCO dead-end, flight recorder, hung_task_panic, book5→Tapo watchdog
+
+### What changed
+Deployed a 3-part recovery/forensics stack for tower's silent hangs (root cause still invisible after ~6 months — a full freeze that leaves pstore empty and no kernel log):
+
+1. **Flight recorder** — `tower-flightrec.service` on tower samples state every 3s (load, PSI `/proc/pressure/*`, D-state/stuck tasks, top-CPU, temp) and **streams it off-box to book5** over a persistent SSH pipe → `/var/log/tower-flightrec.log` (logrotate 20M×5 ≈ ~1 week of 3s samples). A frozen box can't flush its own disk, so on-box logging always had the same blind spot; this is the pre-freeze autopsy data we never had. Autopsy: `ssh book5 'tail -50 /var/log/tower-flightrec.log'`.
+2. **`hung_task_panic=1`** on tower (`/etc/sysctl.d/99-tower-hungtask.conf`) — converts a stuck-task (D-state >120s) stall into a real panic → pstore dump + reboot (`panic=30` already set). May finally catch the hang if it's a driver/IO stall (likely, given VFIO).
+3. **book5 tower-watchdog** — `tower-watchdog.timer` (every 3 min) runs `/opt/tower-watchdog/tower-watchdog.sh`: probes tower on LAN (`.68.249:22`) AND Tailscale (`100.88.38.86:22`); after 5 consecutive fails (~15 min, **both** paths down) power-cycles tower's Tapo P105 **locally via python-kasa** (LAN, no IFTTT/cloud), ntfy-alerts, max 2 cycles then hands off to a human (30-min cooldown). First-line auto-heal; user is the backstop (Tapo app).
+
+Support: new tower→book5 SSH key (root ed25519) for the stream; python-kasa 0.10.2 in a venv (`book5:/opt/tower-watchdog/venv`); Tapo creds root-only (`book5:/etc/tower-watchdog.env`, 600); ntfy topic `homelab-tower-watchdog-8x4k2` (alerting verified end-to-end).
+
+### Why
+2026-07-19 tower hung again — froze 15:26 after **16 days uptime on the pinned 6.17.4 kernel**, discovered ~3.5 h later only because Frigate went blank. book5's corosync saw the token-timeout at 15:28:12; tower's own journal stopped dead mid-stream at 15:26:36; **pstore empty again, no MCE/GPU-XID/OOM/panic**. The softlockup/hardlockup panic knobs have never fired — the hang is below what the kernel lockup detectors see. Tower had **no recovery path** (softdog can't fire on a frozen kernel; the n8n/IFTTT plug-cycle everyone "remembered" only ever watched the PC).
+
+### The iTCO dead-end (don't re-chase)
+The textbook fix — the Intel chipset hardware watchdog (`iTCO_wdt`) — is **BIOS-locked** on this box. Test-loading it returned `unable to reset NO_REBOOT flag, device disabled by hardware/BIOS`; no watchdog device registers. Board = **Lenovo ThinkStation P510** (machine type `30B5`), **no BMC/IPMI** — Lenovo locks the TCO watchdog with no user toggle. So hardware self-reboot is off the table for tower; the book5→Tapo plug-cycle is the actual recovery mechanism.
+
+### Files modified / created
+- `tower:/usr/local/bin/tower-flightrec.sh` + `tower:/etc/systemd/system/tower-flightrec.service` (new)
+- `tower:/etc/sysctl.d/99-tower-hungtask.conf` (new — `hung_task_panic=1`)
+- `book5:/opt/tower-watchdog/{tower-watchdog.sh,venv/,state/}` + `book5:/etc/systemd/system/tower-watchdog.{service,timer}` (new)
+- `book5:/var/log/tower-flightrec.log` + `book5:/etc/logrotate.d/tower-flightrec` (new ring-buffer)
+- `book5:/etc/tower-watchdog.env` (new, 600 — Tapo creds, NOT committed)
+- wiki: `concepts/watchdogs.md`, `components/tower.md`, `components/book5.md`
+
+### Technical notes / decisions
+- **Tower's Tapo plug = "Prox-Tower Tapo Plug" P105 at `192.168.69.178`** (MAC `E0-D3-62-D0-49-2D`), on "Spaceballs" wifi. It's in the DHCP pool (`.69`) so the IP can drift → needs a router reservation (TODO, low-prio). BIOS "power-on-after-AC" is **already set** (plug on_since 7/19 18:52 → tower booted 18:53, i.e. it was recovered via the plug once).
+- **`kasa off/on` are absolute setpoints, not toggles** → the cycle always ends ON regardless of start state (a key advantage of local Tapo over IFTTT's blind one-way triggers).
+- **Local-Tapo chosen over reviving n8n→IFTTT:** the IFTTT tower applets don't exist / are offline, and IFTTT returns HTTP 200 even for disconnected applets (silent-fail trap the wiki already warns about). An n8n "Tower Health Monitor" clone was built but **abandoned unactivated** — the n8n CLI can't import into a running instance (SQLite lock), and n8n's publish≠active clobber-on-restart is the fragility being escaped.
+- **Discovery gotcha:** the plug is on an isolation-enabled wifi SSID — `kasa discover` (UDP broadcast) misses it; direct unicast `kasa --host` works.
+- **PC watchdog reality (aside):** 3-tier (Tier-1 LaunchAgent on **Brad's Mac**, Tier-2 n8n on omarchy), both actuate via IFTTT → so the PC's auto-reboot is **currently DEAD** while those IFTTT applets are offline (ntfy alerts may still work). Not fixed this session.
+- The pinned 6.17.4 kernel **reduced** hang frequency (1–3 days → 16 days) but did NOT eliminate it; root cause remains invisible/hardware-level. See memory `tower_hang_kernel_pin_not_root_cause`.
+- **DHCP server = the router at `192.168.68.1`** (TP-Link), not pihole (pihole DHCP is off). IoT reservations are a router-app job.
+- **Not yet done:** a live power-cycle test (proves the full loop but hard-resets tower) — left for user go-ahead.
+
+---
+
+## 2026-07-16 - HA (VM111) DHCP drift → pinned static 192.168.68.111 in-guest
+
+### What changed
+- **VM111 (Home Assistant) had silently moved off `192.168.68.111` to `192.168.71.49`.** HA OS was running on `ipv4.method: auto` (pure DHCP) — `.68.111` was never actually pinned, it just held by lease luck. After ~12.7d uptime a renewal dropped it into the Deco's DHCP pool. Presented as a dead VM from the Mac (no ping, no web UI, `ssh ha` → "No route to host") while `qm status 111` said `running`.
+- **Fix — pinned static in-guest** via the Supervisor-supported CLI (iface `enp6s18`, profile `Supervisor enp6s18`):
+  ```bash
+  ha network update enp6s18 --ipv4-method static \
+    --ipv4-address 192.168.68.111/22 --ipv4-gateway 192.168.68.1 \
+    --ipv4-nameserver 192.168.68.248 --ipv4-nameserver 192.168.68.1
+  ```
+- **Verified:** `ha network info` → `method: static`, `192.168.68.111/22`; on-disk NM profile `ipv4.method: manual` (survives reboot, not just runtime); ping + `:8123` → 200 from tower AND Mac; `ssh ha` → `a0d7b954-ssh`; `ha.lab:8123` loads in-browser (Twingate resource found its target again); old `.71.49` released.
+
+### Why
+- `.68.111` is what the Twingate `.lab` resource, `ssh ha`, shortcuts, and scripts all point at — the address is load-bearing, so it must be pinned, not leased.
+
+### Technical notes / gotchas
+- **Corrected a wrong fact in the wiki:** `wiki/concepts/network-topology.md` claimed the DHCP pool was `.50`–`71.250` and that infra `.248`–`.250` sat *inside* the pool held by **Address Reservation**. Both wrong. Truth: **pool = `192.168.69.0`–`192.168.71.254`; `.68.x` is static space the pool cannot reach; statics are set PER-MACHINE (client-side), not via router reservation** — so statics can't collide with DHCP and there is no Deco-side reservation to check. Page rewritten.
+- **The guest agent is the diagnostic key.** It rides virtio-serial, not the network, so it answers even when the guest is unreachable by IP. `qm agent 111 network-get-interfaces` reported the real address instantly — the difference between "HA is down" and "HA moved".
+- **Distinct from the tower tap-stranding bug** (`ip link set tapNi0 master vmbr1`). Checked first and ruled out: `tap111i0` was correctly `master vmbr1` and matched `qm config`. Same symptom, different cause — tap-stranding = wrong bridge; this = right bridge, wrong address.
+- **Use `ha network update`, not bare `nmcli`** — the Supervisor owns the `Supervisor enp6s18` profile and will fight/overwrite a raw nmcli edit.
+- **Latent risk elsewhere:** any other `.68.x` host still on `ipv4.method: auto` is one lease renewal from the same outage. Not audited this session.
+
+### Files modified
+- `VM111` — NM profile `Supervisor enp6s18` → static `192.168.68.111/22`
+- `wiki/concepts/network-topology.md` — corrected DHCP pool range + static-space model
+- `wiki/components/vm111-homeassistant.md` — static pin + DHCP-drift gotcha + agent-based diagnosis
+
+---
+
 ## 2026-07-03 - btop GPU panel enabled on VM101 (M4000 readout)
 
 ### What changed
