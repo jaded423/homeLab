@@ -185,7 +185,7 @@ a tracked `local_config.py.example` template. When code changes, **only
 
 | Variable | Mac | WSL |
 |----------|-----|-----|
-| `COA_FOLDER` | `/Users/j/joshua@daxdistro.com - Google Drive/My Drive/1 - THCa Flower COAs` | `/mnt/i/.shortcut-targets-by-id/1v9wlV4MbLRypk-PwGZNzI6KYrKN9qnpX/1 - THCa Flower COAs` |
+| `COA_FOLDER` | Elevated Shared Drive — see `coa/local_config.py` `COA_BASE` (the old `joshua@daxdistro.com` mount died with the Dax teardown 2026-07-06) | `/mnt/h/…` — **stale, needs re-verify**: was `/mnt/i/.shortcut-targets-by-id/1v9wlV4MbLRypk-PwGZNzI6KYrKN9qnpX/1 - THCa Flower COAs` on the dead `I:` drive |
 
 **Sync scripts Mac → WSL** (only the code, never `local_config.py`):
 ```bash
@@ -265,7 +265,9 @@ for drive, mp in [("H:", "/mnt/h"), ("I:", "/mnt/i")]:
         subprocess.run(["sudo", "mount", "-t", "drvfs", drive, mp])
 ```
 
-**Drive accounts:** H: = `joshua@elevatedtrading.com`, I: = `joshua@daxdistro.com`.
+**Drive accounts:** H: = `joshua@elevatedtrading.com`. (I: was `joshua@daxdistro.com` — **dead
+since the Dax teardown 2026-07-06**; `run_full_sync.sh` still gated on it until web `dc65678`
+removed the check. Don't re-add an I: mount.)
 
 ## Windows Scheduled Tasks & Services
 
@@ -355,6 +357,26 @@ schtasks /end /tn "SSH Tunnel to book5"                   # stop
 ```
 
 ## Troubleshooting
+
+**Box is ON (lights, console fine) but ALL network access is dead — Tailscale offline, SSH
+unreachable, DNS failing** → **ephemeral TCP port exhaustion** (seen 2026-07-29 23:08 → 11h
+outage). Windows ran out of dynamic ports, so *no* new outbound socket could open: NTP/DNS
+returned `No such host is known (0x80072AF9)`, both `pc-windows` and `pc-wsl` dropped off the
+tailnet, and WSL cron ran blind for 11 hours (`Temporary failure in name resolution` on every
+`run_full_sync.sh` tick — STEP 1 kept "succeeding" because the Drive crawler reads `/mnt/h`
+locally). The OS never went down; the event log kept writing throughout.
+
+- **Confirm:** `Tcpip` event **4231** — *"a request to allocate an ephemeral port number from
+  the global TCP port space has failed due to all such ports being in use."*
+- **Recover:** reboot. Boot releases winnat's reservations. Confirmed working; a dirty reboot
+  logs `Kernel-Power 41` with no `1074`, which is expected when it's power-cycled while hung.
+- **Suspected cause:** winnat/Hyper-V reserving 100-port blocks inside the 49152–65535 dynamic
+  range (signature = adjacent runs, e.g. 49678–49977, 64064–64663). Whether they accumulate
+  over uptime is **measured, not assumed** — baseline 20 blocks at T+1.5h uptime, tracked in
+  `TODO.md`.
+- **Cure if it recurs:** move the dynamic range out from under the reservations —
+  `netsh int ipv4 set dynamicport tcp start=10000 num=16384` (admin + reboot).
+- **Detection gap:** the 2-min n8n heartbeat stopped at 23:09 and nothing alerted for 11h.
 
 **SSH fails after reboot** → `sudo /usr/local/bin/fix-wsl-ssh` (in WSL).
 

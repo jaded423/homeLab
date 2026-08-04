@@ -54,7 +54,7 @@ Once `s9up` has run, `ssh s9` works from anywhere; otherwise use `ssh s9-local` 
 ## SSH keys / config
 
 - `~/.ssh/id_ed25519` — primary key; pubkey distributed to book5, Mac, Phone (`authorized_keys`)
-- `~/.ssh/config` mirrors homelab topology (hosts added Mar 2026: pc, wsl, pi1, dax)
+- `~/.ssh/config` mirrors homelab topology (hosts added Mar 2026: pc, wsl, pi1; the `dax` host was removed in the 2026-07-06 teardown)
 
 ## Dev workflow stack
 

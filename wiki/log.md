@@ -46,3 +46,14 @@ Documented the new self-heal/forensics mechanisms into [[watchdogs]] (+ host pag
 python-kasa (no IFTTT). Recorded the **iTCO dead-end** — the chipset hardware watchdog is
 BIOS-locked (`NO_REBOOT`) on the Lenovo P510, no BMC — so book5→Tapo is tower's primary recovery.
 Event/forensics detail → `../docs/changelog.md`.
+
+## [2026-07-31] update | pc ephemeral-port-exhaustion signature
+
+Added a Troubleshooting entry to [[pc]] for the class of failure where the box is **ON but
+totally unreachable** — Windows ephemeral TCP port exhaustion (`Tcpip` event 4231), which took
+the Live Ref pipeline down for 11h on 2026-07-29. Covers the confirm/recover/cure steps, the
+winnat 100-port-block signature, and the honest state of the open question (recurrence is
+inferred from the block pattern, not measured — baseline 20 blocks at T+1.5h uptime, tracked in
+`TODO.md`).
+
+Event/forensics detail → `../docs/changelog.md`.

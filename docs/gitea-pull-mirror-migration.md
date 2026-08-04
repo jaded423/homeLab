@@ -28,7 +28,7 @@ from GitHub on a schedule). Keeps 3-2-1 (local + GitHub offsite + Gitea homelab)
 ## Prerequisites (BLOCKERS — get before executing)
 
 1. **GitHub PAT, `repo` read scope**, covering `jaded423` + orgs (`Elevated-Trading-LLC`,
-   `point4project`, `Dax-Distro`). Fine-grained read-only preferred. `gh auth token` can
+   `point4project`). Fine-grained read-only preferred. `gh auth token` can
    bootstrap but rotates — a dedicated PAT won't die under the mirrors. **Needed because
    private repos require `auth_token` in the Gitea mirror config.**
 2. **Decision:** uniform pull-mirror for everything, OR keep ABM/elevatedWeb on instant
@@ -39,7 +39,8 @@ from GitHub on a schedule). Keeps 3-2-1 (local + GitHub offsite + Gitea homelab)
 
 1. **Inventory.** `gh repo list jaded423 --limit 300 --json name,isPrivate` + same per org.
    List Gitea repos via API. Map: mirrored vs not, push-type vs mirror-type.
-2. **Create Gitea orgs** matching GitHub: `elevated`, `point4project`, `dax`. (Namespace
+2. **Create Gitea orgs** matching GitHub: `elevated`, `point4project`. (No `dax` org — Dax
+   dissolved 2026-07-06; its repos stay as-is in cold storage, not re-homed.) (Namespace
    moves for existing `jaded/` repos deferred; only NEW org backups like point4pi go
    straight to their org.)
 3. **Convert each push-mirror → pull-mirror.** Per repo:

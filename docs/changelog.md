@@ -1,5 +1,32 @@
 # HomeLab Project Changelog
 
+## 2026-07-31 - PC 11h blackout root-caused: Windows ephemeral port exhaustion (not a crash)
+
+### What changed
+Diagnosed the 2026-07-29 23:08 → 2026-07-30 10:54 outage that stopped the Live Ref pipeline for 11 hours, and recorded the signature + recovery on [[pc]].
+
+**The machine never went down.** Lights on, console fine, event log writing throughout (SCM 07:36, Volsnap 09:40, Kernel-General 09:51). What died was the ability to open *any* new socket: Windows exhausted its ephemeral TCP ports, so DNS failed (`No such host is known`, 0x80072AF9 against time.google.com / time.windows.com / time1.aliyun.com), both `pc-windows` and `pc-wsl` dropped off the tailnet at 23:09, and there was no path in. Smoking gun = `Tcpip` event **4231** at 00:18:09.
+
+WSL cron kept firing blind for 11 hours — every `run_full_sync.sh` tick got through STEP 1 (the Drive crawler reads `/mnt/h` locally) then died at STEP 2 on `Temporary failure in name resolution`.
+
+Joshua's manual reboot at 10:54 cleared it (boot releases winnat's reservations); it logged `Kernel-Power 41` with no `1074`, i.e. power-cycled while hung, which is expected.
+
+### Why it wasn't caught
+The 2-minute n8n heartbeat (`webhook/pc-heartbeat`) stopped at 23:09 and nothing downstream alerted. The outage was found by eye the next morning.
+
+### Suspected cause + open question
+winnat/Hyper-V reserving 100-port blocks inside the 49152–65535 dynamic range — signature is adjacent runs (49678–49977, 64064–64663). Whether those **accumulate over uptime** is inferred from the block pattern, **not measured**: no pre-reboot count was ever taken. Baseline recorded at **20 blocks, T+1.5h uptime** (boot 2026-07-30 10:54) so a recheck can settle it. Standing decision is **reboot-on-Tailscale-drop**, not a preventive fix — the cure (`netsh int ipv4 set dynamicport tcp start=10000 num=16384`) is documented on [[pc]] for if it recurs.
+
+### Files modified
+- `wiki/components/pc.md` — new Troubleshooting entry (signature, confirm, recover, cure, detection gap)
+- `TODO.md` — recheck item with baseline + `verify:` one-liner
+
+### Technical notes
+- Both tailnet nodes dropping on the same second is the tell for a host-level network death rather than a WSL or service failure.
+- `pgrep -f <pattern>` run over SSH matches its own `bash -c` wrapper — it reported a phantom "run in progress" during this work. Use `ps -eo pid,etime,cmd | grep -v grep`.
+
+---
+
 ## 2026-07-20 - Tower silent-hang recovery stack: iTCO dead-end, flight recorder, hung_task_panic, book5→Tapo watchdog
 
 ### What changed
