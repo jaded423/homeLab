@@ -1,36 +1,78 @@
 ---
 type: component
 title: pc
-tags: [windows, wsl, production, coa, run_full_sync, cron, rustdesk, ics, google-drive, reverse-tunnel]
+tags: [windows, wsl, retired-prod, ics, pi1, twingate, rustdesk, reverse-tunnel]
 related: [access-model, mac, go, phone, s9-tablet, s10, pi1]
 host: pc
-ip: n/a
+ip: 192.168.68.246
 ---
 
-# pc (Windows PC + WSL — Elevated PRODUCTION)
+# pc (Windows PC + WSL — RETIRED from production 2026-08-21)
 
-Custom desktop, **hostname `etintake`**, Windows 11 + WSL2 Ubuntu. Physically at the
-Elevated office (roams on `192.168.1.x` work Wi-Fi). This box is the **production
-runner** for the photos→web automation: the WSL side runs `run_full_sync.sh` every
-15 min (crawler → COA extraction → inventory sync). Roaming sibling of [[mac]] [[go]]
-[[phone]] [[s9-tablet]] [[s10]]; hosts [[pi1]]'s internet via Ethernet ICS.
+Custom desktop, **hostname `etintake`**, Windows 11 + WSL2 Ubuntu. **Relocated from the
+Elevated office to the homeLab 2026-08-06** (Joshua moved to remote work) — now a
+stationary homelab host on a static `192.168.68.246`, no longer roaming on the
+`192.168.1.x` office Wi-Fi. **It is no longer the production runner.** On **2026-08-21** the whole pipeline
+(`run_full_sync.sh` + the odooReports report crons + elevatedOdoo) moved to **m3lv**, an
+M3 MacBook Air that stopped travelling to become the always-on prod host. Its pipeline
+crontab was removed — backed up in place at `~/crontab.bak-cutover-2026-08-21` — leaving
+**only the pc-heartbeat**. Migration record: `~/.claude/plans/i-would-like-to-cosmic-dongarra.md`
+and `elevatedWeb/docs/changelog.md` 2026-08-21.
+
+> ⚠️ **Do NOT power this box down yet.** Its only Ethernet port is [[pi1]]'s ICS gateway
+> (`192.168.137.1`), so switching it off takes pi1 offline. Move pi1 to a LAN switch port
+> first; that is the gate on decommissioning. The Twingate connector (Docker inside WSL)
+> also still needs a new home. Hosts [[pi1]]'s internet via Ethernet ICS.
 
 - **SSH:** `ssh pc` / `ssh pc-local` (PowerShell, port 22); `ssh wsl` / `ssh wsl-local` (WSL Ubuntu, port 2222). Bare alias = Tailscale, `-local` = LAN. Full model → [[access-model]].
-- **Role:** Mac = staging, **WSL = production**. Never deploy code to WSL until the user explicitly says so.
+- **Role:** ~~WSL = production~~ — retired 2026-08-21; prod is now **m3lv**. This box stays powered only for [[pi1]]'s ICS and the Twingate connector.
+
+## Hardware
+
+Measured 2026-08-21 over `ssh pc` (WMI). "Custom desktop" above is wrong — it's an OEM Dell.
+
+| Component | Details |
+|-----------|---------|
+| Model | **Dell Vostro 3030S** (slim/SFF; board `0PVRXF`) |
+| CPU | Intel Core **i5-14400** — 10 cores (6P + 4E) / 16 threads, Raptor Lake Refresh, 65 W. **No ECC.** |
+| RAM | **16 GB DDR5-4800**, 1 of **2** DIMM slots used (`DIMM2`) → single-channel today; **64 GB max** |
+| Storage | **512 GB NVMe** (Samsung MZVL4512HBLU) — the only physical drive. `G:`/`H:` are Google Drive File Stream mounts, not disks |
+| GPU | Intel **UHD Graphics 730** (iGPU only, no discrete card) |
+| Expansion | `SLOT1` + `SLOT2` free (**low-profile / half-height only** — slim chassis); the single `M.2 WLAN` slot holds the Wi-Fi card, and `M.2 PCIe SSD-0` holds the boot NVMe |
+| Wi-Fi | Realtek RTL8852BE Wi-Fi 6 (`Wi-Fi 2`) — the current LAN uplink, `192.168.68.246` |
+| Ethernet | 1× Realtek PCIe GbE (`Ethernet 2`) — **negotiates 100 Mb**, because the far end is [[pi1]] (Pi 1 B+, 100 Mb PHY) |
+
+> **Sizing note for the Proxmox-node plan:** compute is *ahead* of [[book5]] (10C/16T vs
+> 8C/8T) and RAM is the one axis that's actually upgradable here — book5's 16 GB is
+> soldered on-package (Lunar Lake). The two real gaps are **1 GbE vs book5's 2.5 GbE**
+> (book5's 2.5 G is a USB RTL8156 dongle, `enx6c1ff76b3096`, so it can move with the swap)
+> and **512 GB vs book5's 944 GB** pool.
 
 ## Roles: Windows vs WSL
 
 | Layer | What runs there |
 |-------|-----------------|
-| **WSL2 Ubuntu** | **Production cron** (`run_full_sync.sh` 15-min), COA extraction, inventory sync, Twingate connector (Docker), SSH server (port 2222) |
+| **WSL2 Ubuntu** | ~~Production cron~~ (moved to m3lv 2026-08-21). Remaining: Twingate connector (Docker), SSH server (port 2222) |
 | **Windows** | Google Drive File Stream (H:/I:), RustDesk service, reverse-tunnel + heartbeat Scheduled Tasks, ICS gateway for [[pi1]], `netsh portproxy` forwards |
 
 ## Network
 
 | Interface | IP | Purpose |
 |-----------|-----|---------|
-| Wi-Fi | `192.168.1.193` (DHCP, work location) | Main network, Twingate client |
-| Ethernet | `192.168.137.1` | ICS gateway for [[pi1]] |
+| Wi-Fi (`Wi-Fi 2`) | `192.168.68.246` (**static**, client-side netsh, `/22`, gw `.1`, DNS→pihole) | LAN uplink. Set 2026-08-06 on relocation to homeLab. Realtek RTL8852BE |
+| Ethernet (`Ethernet 2`) | `192.168.137.1` | **ICS gateway for [[pi1]]** — the only physical NIC, and it's already taken. Realtek PCIe GbE |
+
+> **⚠ There is only ONE physical Ethernet port (`Ethernet 2`), and pi1's ICS owns it.**
+> So the cat6a cutover is *not* a simple "move the static to Ethernet" — that would cut
+> [[pi1]]'s internet. Pick one first:
+> 1. **Put pi1 on the LAN directly** (cleanest, now that pi1 is also at the homeLab): plug pi1
+>    into a switch port, drop ICS entirely, and free `Ethernet 2` for the cat6a uplink. Also
+>    kills the "pi1 needs PC powered on" dependency documented below.
+> 2. **Add a USB-Ethernet adapter** for whichever role you'd rather move (LAN or ICS).
+>
+> **Static is per-adapter, not per-machine** — never put `.246` on two NICs at once (address
+> conflict). Whichever adapter takes over, return the other to DHCP:
+> `netsh interface ip set address name="Wi-Fi 2" dhcp`.
 
 ```
 Mac → Tailscale/Twingate → PC:22 (PowerShell)
@@ -316,7 +358,7 @@ Get-NetFirewallRule -DisplayName '*RustDesk*53037*'
 # If missing:
 New-NetFirewallRule -DisplayName 'RustDesk Direct TCP 53037' -Direction Inbound -Protocol TCP -LocalPort 53037 -Action Allow -Profile Any
 ```
-Verify from Mac during a session: `netstat -an | grep 192.168.1.193` (direct) vs
+Verify from Mac during a session: `netstat -an | grep 192.168.68.246` (direct) vs
 `grep 21117` (relayed). Direct = Mac → PC:53037 TCP + UDP:21119.
 
 ### GOTCHA: RustDesk "Bad TOML data" / won't connect
