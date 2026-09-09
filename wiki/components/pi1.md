@@ -1,19 +1,24 @@
 ---
 type: component
-title: Pi1 @ Elevated
+title: Pi1
 host: pi1
 ip: 100.98.16.63
-tags: [raspberry-pi, dietpi, git-backup, tailscale, elevated-office, tft]
+tags: [raspberry-pi, dietpi, git-backup, tailscale, homelab, tft]
 related: [access-model, push-all, pc]
 ---
 
-# Pi1 @ Elevated
+# Pi1
 
 Raspberry Pi 1 Model B+ running **DietPi-Bookworm** (ARMv6; cutover from Raspbian
-2026-05-12). Sits at the Elevated office as an offsite **git backup mirror** — one of
-three remotes for the user's repos alongside GitHub + Gitea. Has a 3.5" SPI TFT running
-a custom `hub` dashboard. No Wi-Fi: internet rides the host machine's ICS, but Tailscale
-reachability is host-independent.
+2026-05-12). A **git backup mirror** — one of three remotes for the user's repos alongside
+GitHub + Gitea. Has a 3.5" SPI TFT running a custom `hub` dashboard. No Wi-Fi: internet
+rides the host machine's ICS, but Tailscale reachability is host-independent.
+
+> **⚠ No longer offsite (2026-08-06).** Pi1 moved with [[pc]] from the Elevated office to
+> the homeLab (still on PC's ICS, `192.168.137.77`, confirmed reachable). It now sits in the
+> same building as the cluster it backs up, so it **no longer provides offsite protection** —
+> its original reason for existing. Decide: relocate it back to a genuinely offsite location,
+> or accept it as a third local mirror and treat GitHub/Gitea as the offsite copies.
 
 ## Access
 
@@ -58,6 +63,8 @@ size); Service dots for tailscaled, ssh, cron. Bar colors: green <60%, yellow <8
 
 ## TFT Screen
 
+> **2026-09-09:** screen is leaving pi1 — its job here is done. It is really the Pi 400's screen (cyberdeck hat), so it goes back to mom's Pi 400 on the next visit. Tried on pi-gw1 (Pi 5, official case + lid fan): no fitment. Config below stays as the reference for the overlay.
+
 Hosyond 3.5" SPI TFT (480×320, ILI9486 + XPT2046) — a Waveshare 35a **clone**, not
 genuine. Same physical unit that previously lived on pi-office (now pi-mom).
 
@@ -80,8 +87,8 @@ keyboard/network cables to clear. Log in on the TFT directly with a USB keyboard
 ## Network & Internet (ICS-dependent)
 
 Pi1 has **no Wi-Fi/Bluetooth** — it routes through whichever host machine it's
-USB-Ethernet plugged into, via that OS's Internet Connection Sharing. Currently usually
-plugged into the [[pc]] (Elevated office), occasionally Mac (home).
+USB-Ethernet plugged into, via that OS's Internet Connection Sharing. Currently plugged
+into the [[pc]] (homeLab, since 2026-08-06), occasionally Mac.
 
 - **Tailscale**: `100.98.16.63` — stable across host swaps (host-independent reachability)
 - **ICS subnet**: `192.168.137.x` (Windows ICS) or `192.168.2.x` (macOS Internet Sharing) — drifts with DHCP
