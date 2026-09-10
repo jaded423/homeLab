@@ -167,6 +167,7 @@ One-line summaries below; full escalation logic + logs → [[watchdogs]].
   consecutive fails); also probes DNS. State `/var/lib/network-health-monitor/state.json`,
   logs `journalctl -t net-health`.
 - **`cpu-watchdog.sh`** — suspends the first running VM if CPU > 99% for 3 min.
+- **`doorcam-watch.service`** (2026-09-10, **piGate-owned**) — investigation probe, not a healer: pings the Tapo DoorCam (.68.77) every 15 s and logs L2 evidence on every edge to `/var/log/doorcam-watch.log`. Lives here because book5 shares the cam's L2 and is not the Pi under test. Source + findings → `~/projects/piGate/networks/doorcam-watch/` and `piGate/networks/home-dryrun.md` § DoorCam. Retire when the question is answered.
 - **`fix-vm101-route.service`** — overrides the Twingate route to VM 101 (via [[tower]] on
   vmbr1).
 - **`rsyslog`** (UDP 514) — receives tower's full syslog → `/var/log/tower-remote.log`
