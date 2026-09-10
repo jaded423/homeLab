@@ -36,6 +36,12 @@ timed. Tier 0 is for anything whose physics you don't yet understand (run the pa
   `dig @<server>`, `traceroute`.
 - **Flint 3 (OpenWrt)**: `logread -f`, `ip -br addr`, `bridge vlan show`, `swconfig`/`bridge` for ports,
   `cat /tmp/dhcp.leases`, `nft list ruleset`, `uci show network|firewall|dhcp`, `sysupgrade -b /tmp/cfg.tgz`.
+- **Is that switch managed? (remote check, proven 2026-09-10)**: a managed switch has a management IP (look in
+  `ip neigh` on hosts behind it) and originates LLDP/STP frames — listen on any port behind it with
+  `tcpdump -i <iface> -nn -e 'ether proto 0x88cc or ether dst 01:80:c2:00:00:00'` for 40 s. An unmanaged
+  switch has no IP and sends nothing except chipset chatter (Realtek-chip units broadcast RRCP `0x8899` once a
+  second from the switch's own MAC — OUI lookup names the brand). The office switch behind the Archer came back
+  unmanaged TP-Link, 2.5G (MAC `10:5a:95:39:11:6f`, no IP, no LLDP/STP, links negotiated 2500 Mb/s).
 - **Notebook**: one entry per run — date · tier · hypothesis · exact commands · what was observed · restore verified
   (yes/no, time). Append to `docs/network-lab-log.md` (create on first run). Config snapshots to book5
   `/root/network-lab/<date>-<exercise>.tgz`. Repeatable = someone else could rerun it from the entry.

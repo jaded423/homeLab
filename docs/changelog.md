@@ -6,6 +6,7 @@
 **What changed:**
 - New `wiki/concepts/network-lab.md`: the rebuild (Flint 3 replaces the Archer as gateway, Archer + Decos become APs, VLANs) treated as a career-practice lab. Three tiers fix the blast radius — tier 0 = the existing tower `vmbr9` sandbox, tier 1 = a Flint 3 **island** (WAN into a house port, LAN on `10.68.0.0/16` so it can never collide with the live `192.168.68.0/22`, WAN zone drops RFC1918), tier 2 = production with the old gateway kept intact as rollback. Instruments named (pi-gw2 + Uptime Kuma, netwatch, OpenWrt CLI), notebook format, 12 exercises (island bring-up, DHCP + rogue DHCP, duplicate gateway, broadcast storm, the three layers on wire, 802.1Q trunk, Deco-as-AP + the pairing trap, DNS redirect, gateway-Pi placement in VLANs, timed restore drill, failure drills, the cutover itself), and a "never in the real world" list that grows with the log.
 - `wiki/index.md` row, `wiki/log.md` line, `TODO.md`: Flint 3 cutover item gains the lab as its precondition.
+- Office switch identified remotely from book5 (no LLDP/STP, no IP, Realtek RRCP broadcasts from a TP-Link MAC, 2500 Mb/s links) → **unmanaged TP-Link 2.5G**; row in `network-topology.md`, method in `network-lab.md` § Instruments.
 
 **Why:**
 - Joshua wants networking as a career and wants to add/remove APs, switches, and VLANs in a way that is repeatable, sometimes destructive, and never at the family's expense. The Flint 3 is already partially configured on `.68.*` — the island scheme is the guard against plugging that into the live house.
