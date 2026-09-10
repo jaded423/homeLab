@@ -120,6 +120,12 @@ the limitation is only tagging. So:
 - Living room is mixed-trust on one Archer (TVs + consoles + laptop), so one-label-per-AP
   doesn't cover it. Wire the TVs, or swap the AP.
 - Sell the Archer once the Flint 3 lands; it funds a VLAN-aware AP.
+- **AP plan under the Flint 3 (Joshua, 2026-09-10): all three TP-Link units become wired dumb APs, no mesh.**
+  The Archer and the Decos do **not** EasyMesh together (different TP-Link tiers — bought on that assumption,
+  didn't pan out; none of the three can be flashed). The two Decos still form one wired-backhaul roaming pair in
+  AP mode; the Archer is a standalone AP on the same SSID/password, placed where it overlaps the Decos least.
+  Without a controller the channel plan is manual: 1/6/11 on 2.4 GHz, distinct 5 GHz channels, TX power a notch
+  down so clients roam instead of sticking. Wired APs need no mesh — that was the point of the cabling.
 
 **SSID ≠ VLAN.** The SSID is the door, the VLAN is the room. Proper gear *binds* them. The
 existing Deco "IoT SSID" is Deco's own client-isolation black box, not a VLAN — on the
