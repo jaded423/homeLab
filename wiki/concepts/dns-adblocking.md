@@ -8,6 +8,14 @@ related: [pihole, watchdogs, access-model, go, network-topology, mullvad]
 Network-wide DNS = pihole `192.168.68.248`. This page owns the **policy** (where DNS is
 configured, the gotchas, the auto-remediation). The pihole host/appliance itself → [[pihole]].
 
+> **⚠ "Whole-home" overstates it — pihole is advisory, and it fails open.** It is *not* in
+> the traffic path; it answers lookups only when a device chooses to ask. Devices with a
+> hardcoded resolver (smart-TV firmware → `8.8.8.8`), browsers using encrypted DNS, a
+> manually-changed setting, or anything on cellular simply never consult it — silently, with
+> no alert. It also only ever sees the **domain**, never the page, so it is the wrong tool
+> for content monitoring. Making it actually mandatory needs a gateway that redirects all
+> DNS and blocks encrypted-lookup ports → [[network-segmentation]].
+
 ## Where network DNS is configured (the ONE field that matters)
 
 Network DNS is handed to all clients via **Deco app → DHCP Server → Primary DNS = `192.168.68.248`**

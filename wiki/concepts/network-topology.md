@@ -12,6 +12,11 @@ router in Spectrum bridge mode, a 2.5 GbE backbone between the two Proxmox nodes
 structured IP scheme. Reachability (SSH/Tailscale/Twingate) → [[access-model]]; DNS →
 [[dns-adblocking]]; VPN egress → [[mullvad]].
 
+> **This page describes the CURRENT flat network.** The plan to split it into trust-level
+> VLANs (`work`/`iot`/`family`/`guest`), the GL.iNet Flint 3 gateway that replaces the Deco
+> as router, and the wiring/AP constraints → [[network-segmentation]] (planned 2026-08-07,
+> not yet built).
+
 ## Subnet + IP scheme
 
 - **Subnet:** `192.168.68.0/22` — a single unified network (one flat L2/L3 domain).
@@ -48,12 +53,12 @@ one-line pointer — full reachability model is in [[access-model]].
 | Porch (Tapo) | 192.168.68.76 | Camera → Frigate on VM 101 |
 | [[mac]] | 192.168.69.222 | `ssh mac` / `ssh mac-local`. DHCP reservation → hardware MAC `2C:CA:16:05:C8:72` (in-pool .69–.71); roams elsewhere |
 | [[go]] (Pixelbook Go) | 192.168.68.247 | `ssh go` / `ssh go-local`. Static 2026-06-28 (client-side NM, `/22`, gw `.1`, DNS→pihole) |
-| [[pc]] (Windows PC) | DHCP | `ssh pc` / `ssh pc-local` |
-| WSL (Ubuntu on PC) | DHCP | `ssh wsl` / `ssh wsl-local` |
+| [[pc]] (Windows PC) | 192.168.68.246 | `ssh pc` / `ssh pc-local`. Static 2026-08-06 (client-side netsh on `Wi-Fi 2`, `/22`, gw `.1`, DNS→pihole) — relocated to homeLab |
+| WSL (Ubuntu on PC) | *(none — NAT)* | `ssh wsl` / `ssh wsl-local`. No LAN IP of its own; reached via [[pc]]'s host portproxy on `2222`, so it tracks `.246` |
 | [[phone]] (S25 Ultra/Termux) | DHCP | `ssh s25` (mDNS) / `s25-{home,work,tunnel}` |
 | [[s9-tablet]] (S9 FE) | 192.168.68.50 | `ssh s9` / `ssh s9-local` (on-demand tunnel) |
 | [[s10]] (S10+) | 192.168.68.73 | `ssh s10` / `ssh s10-local` (on-demand tunnel) |
-| [[pi1]] (@ Elevated, offsite) | 100.98.16.63 | `ssh pi1` (Tailscale). NOT on home LAN |
+| [[pi1]] | 100.98.16.63 | `ssh pi1` (Tailscale). NOT on the LAN — sits on [[pc]]'s ICS subnet `192.168.137.77`. Moved to homeLab with [[pc]] 2026-08-06, so **no longer offsite** |
 | Wife laptop | 192.168.68.59 | pihole full-**bypass** client (MAC `74:13:ea:0f:c1:6b`) — see [[dns-adblocking]] |
 
 > Phones/tablets/IoT on `.52 .57 .62 .66 .67 .70 .71 .72` use **MAC randomization** —

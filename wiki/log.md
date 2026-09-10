@@ -7,6 +7,17 @@ related: [index]
 
 # homeLab wiki — log
 
+- **2026-09-10** — new [[network-lab]]: the home-network rebuild (Flint 3 gateway, Archer + Decos → APs, VLANs) framed as a tiered, repeatable career-practice lab — tier 0 tower sandbox, tier 1 Flint island on its own `10.68/16` scheme (double-NAT, RFC1918 blocked), tier 2 production; 12 exercises with break/restore/lesson; pi-gw2 (piGate) is the island's probe. [[network-segmentation]] keeps the target design.
+- **2026-09-09** — [[pi1]] § TFT: the 3.5" SPI TFT is leaving pi1 (it is the Pi 400's screen; back to mom's). No fit on the Pi 5 gateway's case. Overlay notes stay as reference.
+- **2026-09-09** — personal tailnet ACL gained `tag:gateway` + RFC1918 `autoApprovers`; **pi-gw1**
+  (piGate Pi 5 tester) advertises `192.168.68.0/22` as a subnet route from the home LAN →
+  [[access-model]]. Not homelab infra — leaves for the church.
+- **2026-08-21** — [[pc]] (`etintake`) **retired from production**. The Elevated pipeline moved
+  to m3lv; its pipeline crontab was removed (backup in place at `~/crontab.bak-cutover-2026-08-21`),
+  leaving only the pc-heartbeat. ⚠️ The box must stay **POWERED** — its only Ethernet port is
+  [[pi1]]'s ICS gateway, so powering it off takes pi1 offline. Moving pi1 to a LAN switch port is
+  the gate on decommissioning; the Twingate connector inside WSL also still needs a new home.
+
 Append-only record of wiki changes (ingests, restructures, lint passes). Consistent
 prefix `## [YYYY-MM-DD] <op> | <what>` so it's grep-able:
 `grep "^## \[" log.md | tail -5`.

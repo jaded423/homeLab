@@ -1,5 +1,67 @@
 # HomeLab Project Changelog
 
+
+## 2026-09-10 — Network lab: tiered, repeatable experiments around the Flint 3 rebuild
+
+**What changed:**
+- New `wiki/concepts/network-lab.md`: the rebuild (Flint 3 replaces the Archer as gateway, Archer + Decos become APs, VLANs) treated as a career-practice lab. Three tiers fix the blast radius — tier 0 = the existing tower `vmbr9` sandbox, tier 1 = a Flint 3 **island** (WAN into a house port, LAN on `10.68.0.0/16` so it can never collide with the live `192.168.68.0/22`, WAN zone drops RFC1918), tier 2 = production with the old gateway kept intact as rollback. Instruments named (pi-gw2 + Uptime Kuma, netwatch, OpenWrt CLI), notebook format, 12 exercises (island bring-up, DHCP + rogue DHCP, duplicate gateway, broadcast storm, the three layers on wire, 802.1Q trunk, Deco-as-AP + the pairing trap, DNS redirect, gateway-Pi placement in VLANs, timed restore drill, failure drills, the cutover itself), and a "never in the real world" list that grows with the log.
+- `wiki/index.md` row, `wiki/log.md` line, `TODO.md`: Flint 3 cutover item gains the lab as its precondition.
+
+**Why:**
+- Joshua wants networking as a career and wants to add/remove APs, switches, and VLANs in a way that is repeatable, sometimes destructive, and never at the family's expense. The Flint 3 is already partially configured on `.68.*` — the island scheme is the guard against plugging that into the live house.
+- Home decision: lab lives here (the LAN's one home), piGate points at it and supplies the probe.
+
+---
+
+## 2026-09-09 — pi1: TFT screen leaving (back to the Pi 400)
+
+**What changed:**
+- `wiki/components/pi1.md` § TFT Screen: dated note — the Hosyond 3.5" SPI TFT's job on pi1 is done; it is the Pi 400's screen (cyberdeck hat) and goes back to mom's Pi 400 on the next visit. Tried on pi-gw1 (Pi 5, official case + lid fan): no fitment. Overlay config kept as the reference.
+
+**Why:**
+- Joshua's call after the piGate screen test; pi1's runtime is unchanged, only the accessory's future.
+
+---
+
+## 2026-09-09 — Personal tailnet: ACL tags + auto-approvers; pi-gw1 subnet router on the home LAN
+
+**What changed:**
+- `jaded423@` tailnet policy: added `tagOwners` `tag:gateway` (admins) and `autoApprovers.routes` for
+  10/8, 172.16/12, 192.168/16 → `tag:gateway`. Allow-all grant + SSH check rule unchanged.
+- `pi-gw1` (piGate Tailscale gateway kit #1, Pi 5) joined the tailnet tagged and advertises
+  `192.168.68.0/22`; route auto-approved. Verified from a phone on 5G reaching 192.168.68.1.
+- Wired into the BE9700 (the GL.iNet swap is still pending — cable not run yet).
+
+**Why:** piGate's client-site appliance needed a real LAN to prove plug-and-play; home was the test bench.
+The ACL change is permanent (every future gateway on this tailnet rides it); the Pi itself is temporary.
+
+**Where the current state lives:** [[access-model]] (new section) + `wiki/log.md`. Build story →
+`~/projects/piGate/docs/changelog.md` (2026-09-08/09 entry).
+
+## 2026-08-21 — pc (`etintake`) retired from production
+
+**What changed:**
+- The Elevated photos→web pipeline and all the Odoo report crons moved off this box to **m3lv**
+  (an M3 MacBook Air that stopped travelling to become the always-on prod runner).
+- Its pipeline crontab was removed — backed up in place at `~/crontab.bak-cutover-2026-08-21`.
+  **Only the pc-heartbeat still runs**, kept deliberately: the box stays powered, so silencing
+  its heartbeat would make the n8n "PC Health Monitor" alert on a machine that is deliberately alive.
+- `wiki/components/pc.md` retitled and re-scoped; the Roles table no longer claims WSL is prod.
+
+**Why:**
+- Joshua is retiring the PC to a new project. Detail on the pipeline side lives in
+  `elevatedWeb/docs/changelog.md` 2026-08-21 and `~/.claude/plans/i-would-like-to-cosmic-dongarra.md`.
+
+**⚠️ Do NOT power this box down yet — the local consequence that does not travel with the
+pipeline story:** its ONLY physical Ethernet port is [[pi1]]'s ICS gateway (`192.168.137.1`).
+Powering it off takes pi1 offline. Move pi1 to a LAN switch port first — that is the gate on
+decommissioning. The Twingate connector (Docker inside WSL) also still needs a new home.
+
+**Files modified:**
+- `wiki/components/pc.md` — retired-from-prod header, ICS warning, Roles table
+- `wiki/log.md` — entry
+
+---
 ## 2026-07-31 - PC 11h blackout root-caused: Windows ephemeral port exhaustion (not a crash)
 
 ### What changed

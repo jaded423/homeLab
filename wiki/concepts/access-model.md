@@ -132,6 +132,25 @@ triggers: a second SSH user, a Twingate Android client, an audit/session-recordi
 requirement, or SSH-key sprawl becoming a maintenance burden. Full plan:
 `docs/twingate-ssh-privileged-access-cutover.md`.
 
+## Personal tailnet — ACL + a subnet router on the home LAN (2026-09-09)
+
+The `jaded423@gmail.com` tailnet policy is no longer the stock allow-all file. It now also
+defines **`tag:gateway`** (owner `autogroup:admin`) and **auto-approves any RFC1918 route**
+(`10.0.0.0/8`, `172.16.0.0/12`, `192.168.0.0/16`) advertised by a `tag:gateway` node. The
+allow-all grant and the SSH check-mode rule are unchanged. Edited in the console JSON editor
+(`console.tailscale.com/admin/acls/file`).
+
+**`pi-gw1`** (Pi 5, tagged `tag:gateway`, Tailscale IP `100.104.88.96`, LAN DHCP) is wired
+into a BE9700 LAN port and advertises **`192.168.68.0/22`** as a subnet route — so any tailnet
+device off-LAN (phone on cellular) reaches every homelab host and the router by LAN IP through
+it. It is piGate's client-site gateway **kit #1, on the home LAN as a tester** until the church
+visit; it is not homelab infrastructure and will leave. Detail → `~/projects/piGate/fleet/`
+(runbook `FLASH.md`) + `docs/tailscale-mode.md`. `ssh pi-gw1` / `ssh gw1` (sshConfig).
+
+Gotcha while it is here: a second tailnet subnet router for `192.168.68.0/22` (e.g. re-enabling
+one on book5/tower) is fine — Tailscale treats duplicates as HA failover — but the same prefix
+advertised from a **different** site on the same tailnet would collide.
+
 ## Sources
 
 - `~/projects/homeLab/CLAUDE.md` lines 45–119 (Operational Current State, authoritative)

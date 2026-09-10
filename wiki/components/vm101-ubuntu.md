@@ -121,10 +121,16 @@ systemctl status ollama && sudo systemctl restart ollama
 Continuous 24/7 recording on the HDD NFS pool (async, ~130 MB/s), ~35 GB/day → ~1 TB at
 30-day retention. Config `~/docker/frigate/docker-compose.yml`; UI `http://192.168.68.101:5000`.
 
-| Camera | IP | Resolution | Codec |
-|--------|-----|------------|-------|
-| PetCam (Tapo) | 192.168.68.75 | 2560×1440 (2K) | H.264 |
-| Porch (Tapo) | 192.168.68.76 | 3840×2160 (4K) | H.265 |
+| Camera | Model | IP | Link | Resolution | Codec |
+|--------|-------|-----|------|------------|-------|
+| PetCam (Tapo) | *(unrecorded — check Tapo app → Device Info)* | 192.168.68.75 | — | 2560×1440 (2K) | H.264 |
+| Porch (Tapo) | **C560WS** hw 1.0, fw 1.1.10 | 192.168.68.76 | Wi-Fi (`Spaceballs`) | 3840×2160 (4K) | H.265 |
+
+> **C560WS has NO PoE.** It has a 10/100 ethernet port but powers from a 12V DC barrel plug,
+> so a wired run still needs power at the camera — or a **PoE splitter** (PoE in → 12V DC +
+> ethernet out) to get down to a single cable. Model captured 2026-08-07 from the Tapo app;
+> ONVIF (port 2020) requires auth and HA only sees these through Frigate, so the app is the
+> quickest source of truth for camera hardware.
 
 Frigate's nginx (5000) can serve the page shell while the backend (5001) is wedged → shows
 "unhealthy" with a blank UI; that's the failure mode **autoheal** catches (POSTs a webhook →
