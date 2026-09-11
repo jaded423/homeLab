@@ -1,7 +1,15 @@
 # HomeLab Project Changelog
 
 
-## 2026-09-10 — Network lab: tiered, repeatable experiments around the Flint 3 rebuild
+## 2026-09-11 — Terminal lab: TERM / terminfo / ncurses study page beside the network lab
+
+**What changed:**
+- New `wiki/concepts/terminal-lab.md` — the stack (emulator ← escape sequences ← terminfo keyed by TERM ← ncurses ← program), instruments, man-page reading order, and 10 tier-0 exercises in the network-lab shape. Pointer from `network-lab.md` ("sibling lab"), `wiki/index.md` row.
+
+**Why:**
+- `clear` from Ghostty on pi-gw1 failed with `'xterm-ghostty': unknown terminal type` (trixie's `ncurses-term` predates Ghostty's entry; fixed by `infocmp -x | tic -x`, baked into the piGate card). Joshua asked for the rabbit hole to be kept with his networking studies; the lab pages in this wiki are that study home.
+
+: tiered, repeatable experiments around the Flint 3 rebuild
 
 **What changed:**
 - New `wiki/concepts/network-lab.md`: the rebuild (Flint 3 replaces the Archer as gateway, Archer + Decos become APs, VLANs) treated as a career-practice lab. Three tiers fix the blast radius — tier 0 = the existing tower `vmbr9` sandbox, tier 1 = a Flint 3 **island** (WAN into a house port, LAN on `10.68.0.0/16` so it can never collide with the live `192.168.68.0/22`, WAN zone drops RFC1918), tier 2 = production with the old gateway kept intact as rollback. Instruments named (pi-gw2 + Uptime Kuma, netwatch, OpenWrt CLI), notebook format, 12 exercises (island bring-up, DHCP + rogue DHCP, duplicate gateway, broadcast storm, the three layers on wire, 802.1Q trunk, Deco-as-AP + the pairing trap, DNS redirect, gateway-Pi placement in VLANs, timed restore drill, failure drills, the cutover itself), and a "never in the real world" list that grows with the log.

@@ -7,6 +7,7 @@ related: [index]
 
 # homeLab wiki — log
 
+- **2026-09-11** — new [[terminal-lab]]: sibling of [[network-lab]] — the TERM → terminfo → ncurses → escape-sequence stack as a study page with 10 tier-0 exercises, born from the `xterm-ghostty: unknown terminal type` fault on pi-gw1.
 - **2026-09-10** — new [[network-lab]]: the home-network rebuild (Flint 3 gateway, Archer + Decos → APs, VLANs) framed as a tiered, repeatable career-practice lab — tier 0 tower sandbox, tier 1 Flint island on its own `10.68/16` scheme (double-NAT, RFC1918 blocked), tier 2 production; 12 exercises with break/restore/lesson; pi-gw2 (piGate) is the island's probe. [[network-segmentation]] keeps the target design.
 - **2026-09-09** — [[pi1]] § TFT: the 3.5" SPI TFT is leaving pi1 (it is the Pi 400's screen; back to mom's). No fit on the Pi 5 gateway's case. Overlay notes stay as reference.
 - **2026-09-09** — personal tailnet ACL gained `tag:gateway` + RFC1918 `autoApprovers`; **pi-gw1**

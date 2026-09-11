@@ -17,6 +17,8 @@ Target design (labels, wiring, hardware decision) is owned by [[network-segmenta
 [[network-topology]]. This page owns the **method** and the **exercise list**. The Pi appliances (piGate) are the
 instruments, not the subject — `~/projects/piGate/networks/home-dryrun.md` has the inventory + Uptime Kuma pattern.
 
+**Sibling lab:** [[terminal-lab]] — TERM / terminfo / ncurses / escape sequences, same exercise shape, all tier 0.
+
 ## The three tiers
 
 | Tier | Where | Can break | Cannot break | Reset |
