@@ -1,6 +1,23 @@
 # HomeLab Project Changelog
 
 
+## 2026-09-13 — book5 becomes a USB host for piGate Pis (pigw0)
+
+**What changed:**
+- book5 now adopts a piGate Pi 5 plugged into the dock's USB-C port as a network device: udev names the fleet gadget MAC `pigw0` and starts `pigw-usb.service` (192.168.7.1/24, `ip_forward=1`, iptables MASQUERADE `192.168.7.0/24 → vmbr1`, dnsmasq DHCP+DNS bound to 192.168.7.1 only). Unplug ⇒ unit stops, rules removed.
+- `/etc/NetworkManager/conf.d/90-pigw-unmanaged.conf` — book5 runs NetworkManager (laptop); it grabbed `pigw0` and flushed the static address once.
+- Full detail on the [[book5]] page § "piGate USB host".
+
+**Why:**
+- The Mac stopped enumerating pi-gw2's USB gadget; book5 enumerated it in 72 s and proved the Pi was fine. It stays as the reference USB host (and the model for a future Linux desk-Pi dock). Story → piGate changelog 2026-09-13 + brain `pi5-usb-gadget-mac-cold-plug-needs-bridge100`.
+
+**Files modified (on book5):**
+- `/etc/udev/rules.d/86-pigw-usb.rules`, `/usr/local/sbin/pigw-usb.sh`, `/etc/pigw-dnsmasq.conf`, `/etc/systemd/system/pigw-usb.service`, `/etc/NetworkManager/conf.d/90-pigw-unmanaged.conf`
+
+**Technical notes:**
+- udev `ENV{SYSTEMD_WANTS}` on the net device did not start the unit; `RUN+="/bin/systemctl --no-block start pigw-usb.service"` does.
+- `net.ipv4.ip_forward=1` stays on host-wide after the first plug (nothing else on book5 relied on it being 0).
+
 ## 2026-09-11 — Terminal lab: TERM / terminfo / ncurses study page beside the network lab
 
 **What changed:**
