@@ -157,6 +157,18 @@ journalctl -t twingate-dns-pin
 **Weekly TG updates:** Sunday 3:00 AM, log `/var/log/twingate-upgrade.log`. Skip before
 travel with `OOO` (creates `/var/log/twingate-skip-upgrade`).
 
+### piGate USB host (pigw0) — book5 as the "Internet Sharing" end for a Pi on USB (added 2026-09-13)
+
+A piGate Pi 5 in gadget mode (piGate `fleet/gateway/pigate-usb-gadget.sh`, fixed host-side MAC `06:70:69:67:77:01`, product "pi-gw USB") plugged into the **dock's USB-C port** (USB-A is ~0.9 A → the Pi won't boot) becomes `pigw0` here and gets internet through book5, no hands:
+
+- `/etc/udev/rules.d/86-pigw-usb.rules` — names the gadget `pigw0` and starts the unit (`RUN+=systemctl --no-block start pigw-usb.service`; `ENV{SYSTEMD_WANTS}` alone did not fire).
+- `/etc/systemd/system/pigw-usb.service` — `BindsTo` the `pigw0` device (unplug ⇒ stops); `ExecStartPre` `/usr/local/sbin/pigw-usb.sh up` (192.168.7.1/24, `net.ipv4.ip_forward=1`, iptables MASQUERADE `192.168.7.0/24 → vmbr1` + FORWARD accept), then `dnsmasq --keep-in-foreground --conf-file=/etc/pigw-dnsmasq.conf` (DHCP 192.168.7.10–50, DNS → pihole `.248`, **bound to 192.168.7.1 only** — never the LAN); `ExecStopPost … down` removes the rules.
+- `/etc/NetworkManager/conf.d/90-pigw-unmanaged.conf` — book5 runs NetworkManager (laptop); without this it grabbed `pigw0` and flushed the address once.
+- Reach the Pi: `cat /run/pigw-dnsmasq.leases` → `ssh -J book5-local jaded@192.168.7.<n>` from the Mac.
+- Side effect to know: `ip_forward=1` stays on after the first plug (host-wide; nothing else on book5 needed it).
+
+Why it exists: the Mac stopped enumerating pi-gw2's gadget on 2026-09-12; book5 enumerated it in 72 s, which proved the Pi. Story + Mac status → piGate `fleet/FLASH.md` § Desk demo and piGate changelog 2026-09-13.
+
 ### Watchdogs (summary)
 
 book5 runs several watchdogs with hardcoded subnet IPs (update if the subnet changes).
