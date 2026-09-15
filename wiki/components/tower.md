@@ -93,6 +93,8 @@ ethtool -k nic0 | grep -E 'tcp-seg|generic'
 | `rpool` | 370 GB SSD | 370 GB | System, VM disks |
 | `media-pool` | 4 TB HDD | 3.5 TB usable | Media, Ollama models, Frigate |
 
+`media-pool/backups/` holds machine backups: `macAir` (whole-Mac mirror, `scripts/bin/mac-to-tower.sh`) and `pocket` (GPD Pocket 4 factory-Windows image, 2026-09-15, snapshot `@2026-09-15-factory-windows`; the Pocket streams in over ssh as root with the `j@pocket` key; recipe in `~/projects/pocket/linux/`). Not exported.
+
 `media-pool` layout (`/media-pool/{media,ollama,frigate}`) is exported to VM 101 over NFS
 (async, ~130 MB/s). More on tiers → [[storage]].
 

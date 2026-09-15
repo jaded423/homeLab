@@ -58,6 +58,7 @@ Documented the new self-heal/forensics mechanisms into [[watchdogs]] (+ host pag
 **`tower-watchdog.timer`** that power-cycles tower's Tapo P105 at `192.168.69.178` locally via
 python-kasa (no IFTTT). Recorded the **iTCO dead-end** — the chipset hardware watchdog is
 BIOS-locked (`NO_REBOOT`) on the Lenovo P510, no BMC — so book5→Tapo is tower's primary recovery.
+- **2026-09-15** — Tower: `media-pool/backups/pocket` dataset (GPD Pocket 4 factory-Windows image, 71 GB, snapshotted); `j@pocket` key on tower root for direct backup streams; tailnet nodes renamed `pocket` (Linux) / `pocket-win` (Windows). → [[tower]], `../docs/changelog.md`.
 Event/forensics detail → `../docs/changelog.md`.
 
 ## [2026-07-31] update | pc ephemeral-port-exhaustion signature

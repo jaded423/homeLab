@@ -1,6 +1,19 @@
 # HomeLab Project Changelog
 
 
+## 2026-09-15 — Tower: `media-pool/backups/pocket` dataset + GPD Pocket 4 factory image
+
+**What changed:**
+- New ZFS dataset `media-pool/backups/pocket` (compression=off; contents are zstd already). First payload: the Pocket's factory Windows side — GPT table, layout, EFI/MSR raw, Windows + Recovery via partclone.ntfs, SHA256SUMS; 71 GB in `2026-09-15/`; snapshot `media-pool/backups/pocket@2026-09-15-factory-windows`.
+- `j@pocket` ed25519 key added to tower root's `authorized_keys` so the Pocket can stream backups directly (no shell export; key file only).
+- Tailnet: the Pocket's two nodes renamed — Linux `pocket`, Windows `pocket-win`.
+
+**Why:** return-window insurance for the Pocket without buying an external SSD; Tower had 1.29 TB free. Streamed over the 2.5 GbE wire at 261 MB/s through ssh. Script + restore recipe live in `~/projects/pocket/linux/`.
+
+**Files modified:** none on disk here — ZFS + `/root/.ssh/authorized_keys` on tower.
+
+---
+
 ## 2026-09-13 — book5 becomes a USB host for piGate Pis (pigw0)
 
 **What changed:**
