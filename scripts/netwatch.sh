@@ -1,6 +1,7 @@
 #!/bin/zsh
 # netwatch — one probe cycle: first hop (default gateway) + WAN (1.1.1.1).
-# Fired every 30s by ~/Library/LaunchAgents/com.j.netwatch.plist.
+# Fired every 30s by ~/Library/LaunchAgents/com.j.netwatch.plist (macOS) or the
+# netwatch.timer systemd user unit (Linux; unit lives in pocket/linux/systemd/).
 #
 # Why both hops: loss at the gateway AND the WAN = local (router/Wi-Fi link).
 # Loss at the WAN only = upstream (ISP). That split is the whole point of the log.
@@ -37,15 +38,26 @@ fi
 probe() {
   local target="$1"
   local out
-  out=$(ping -c 1 -W 2000 -t 3 "$target" 2>/dev/null) || { print -- "LOSS"; return }
+  if [[ $OSTYPE == darwin* ]]; then
+    out=$(ping -c 1 -W 2000 -t 3 "$target" 2>/dev/null) || { print -- "LOSS"; return }
+  else
+    out=$(ping -c 1 -W 2 "$target" 2>/dev/null) || { print -- "LOSS"; return }
+  fi
   print -- "${${out##*time=}%% ms*}"
 }
 
 ts=$(date +%Y-%m-%dT%H:%M:%S%z)
 
-route_out=$(route -n get default 2>/dev/null)
-gw=${${route_out##*gateway: }%%$'\n'*}
-iface=${${route_out##*interface: }%%$'\n'*}
+if [[ $OSTYPE == darwin* ]]; then
+  route_out=$(route -n get default 2>/dev/null)
+  gw=${${route_out##*gateway: }%%$'\n'*}
+  iface=${${route_out##*interface: }%%$'\n'*}
+else
+  # Linux: "default via 192.168.68.1 dev wlan0 ..." (first default route wins)
+  route_out=$(ip -4 route show default 2>/dev/null | head -1)
+  gw=${${route_out##*via }%% *}
+  iface=${${route_out##*dev }%% *}
+fi
 
 # No default route at all — asleep, or genuinely offline. Record it and stop.
 if [[ -z "$gw" || "$gw" == "$route_out" ]]; then
