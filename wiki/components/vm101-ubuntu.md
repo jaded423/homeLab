@@ -197,7 +197,7 @@ VM101 is the always-on box, so timed/automated mail from Joshua's own identity r
 - **Identity:** `j@jadedviber.com` (jadedviber.com Workspace org). Token in `~/.config/gsuite/` (user `jaded`), issued by an **Internal** OAuth client (GCP project `mcps`) → never expires. The box did its **own consent**, no token copied in: `ssh -t -L 8765:localhost:8765 ubuntu 'GSUITE_AUTH_PORT=8765 ~/.venvs/gsuite/bin/gsuite auth'`, open the printed URL on the laptop. (`GSUITE_AUTH_PORT` added to the gsuite package for exactly this.)
 - **Install:** `~/projects/gsuite` (clone of jaded423/gsuite) into `~/.venvs/gsuite`; client file + settings in `~/.config/gsuite/`.
 - **Helper:** `~/.local/bin/gmail-send TO "SUBJECT" < body.txt` — plain-text send as j@. Verified 2026-09-16 (test to jaded423).
-- **Timer pattern (one-shot):** `systemd-run --user --on-calendar="2026-09-17 09:00" bash -c 'echo body | ~/.local/bin/gmail-send to@x "subject"'` — needs `loginctl enable-linger jaded` once (not yet enabled), or use the user crontab, which runs without a login session. Recurring: a `~/.config/systemd/user/*.timer` pair.
+- **Timer pattern (one-shot):** `systemd-run --user --on-calendar="2026-09-17 09:00" bash -c 'echo body | ~/.local/bin/gmail-send to@x "subject"'` — `loginctl enable-linger jaded` is ON (2026-09-17), so user timers fire with nobody logged in; the user crontab also works. Recurring: a `~/.config/systemd/user/*.timer` pair.
 - **Why not a personal Gmail token here:** consumer accounts sit on an External-Testing OAuth app → refresh tokens die every 7 days → a scheduler here would stop silently. Detail: brain `jadedviber-workspace-org`, `gsuite-home-instance`.
 
 ## Troubleshooting
