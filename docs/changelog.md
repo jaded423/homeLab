@@ -1,6 +1,20 @@
 # HomeLab Project Changelog
 
 
+## 2026-09-17 — `gmail-at`: real scheduled mail from VM101 (the Point4 reminder that never fired)
+
+**What changed:**
+- **ubuntu (VM101)**: new `~/.local/bin/gmail-at "YYYY-MM-DD HH:MM" TO "SUBJECT" < body.txt` — writes a **persistent** systemd user timer + service pair (`~/.config/systemd/user/mail-<stamp>-<slug>.{timer,service}`) and a runner + body under `~/.local/share/mail-at/`. `Persistent=true` (sends on next boot if the box was down), linger already ON, units self-remove after a good send, a failed send leaves them visible. `--list` / `--cancel NAME`.
+- **First real job proven end to end:** the Point4 reminder armed for 09:45 CDT, fired 09:45:03, `sent … -> joshua@elevatedtrading.com` in the journal, units gone afterwards, message present in the Elevated mailbox from j@jadedviber.com (SPF pass, DKIM pass).
+- **Gotcha found:** Gmail filed that first jadedviber.com → Elevated message under **Spam** despite SPF+DKIM passing (day-old domain, first mail to that mailbox). Rescued by hand; a "never send to spam" filter for j@ in the Elevated account was blocked by auto mode — Joshua to add it in the UI. Expect the same once with jaded423 / brown.
+- Wiki: [[vm101-ubuntu]] § *Scheduled mail* — the `systemd-run` one-liner is replaced by the `gmail-at` runbook.
+
+**Why:** the 2026-09-16 "send me a reminder at 9" never fired — it ended as a Gmail draft in the Elevated account with "click Schedule send", which Joshua rightly called useless. The evening's Workspace + own-consent work on ubuntu existed precisely so timed mail has an unattended home; this closes the loop. Rule captured in global memory `feedback_schedule_email_means_arm_it`.
+
+**Files modified:**
+- `ubuntu:~/.local/bin/gmail-at` — new
+- `wiki/components/vm101-ubuntu.md` — Scheduled-mail section, timer pattern → gmail-at
+
 ## 2026-09-16 — VM101 becomes the "home email" sender: own OAuth consent via tunnel, `gmail-send`, linger on
 
 **What changed:**
