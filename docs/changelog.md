@@ -1,6 +1,20 @@
 # HomeLab Project Changelog
 
 
+## 2026-09-16 — VM101 becomes the "home email" sender: own OAuth consent via tunnel, `gmail-send`, linger on
+
+**What changed:**
+- **ubuntu (VM101)**: `~/projects/gsuite` cloned (jaded423/gsuite) into `~/.venvs/gsuite`; `~/.config/gsuite/` holds the Internal client file + settings and a token the box obtained **itself**: `ssh -t -L 8765:localhost:8765 ubuntu 'GSUITE_AUTH_PORT=8765 ~/.venvs/gsuite/bin/gsuite auth'` with the consent page opened on the Pocket. Identity = **j@jadedviber.com**; token never expires (Internal app).
+- **`~/.local/bin/gmail-send TO "SUBJECT" < body`** — plain-text send as j@. Verified with a test to jaded423.
+- **`loginctl enable-linger jaded`** — user timers now fire with nobody logged in (no sudo needed). Proven with `systemd-run --user --on-active=2min …` → mail arrived on schedule.
+- Wiki: [[vm101-ubuntu]] § *Scheduled mail* (recipe, helper, timer pattern, why-not-consumer-Gmail).
+
+**Why:** timed/automated mail from Joshua's own identity should run from the always-on box, not a laptop. The first attempt (copy the Elevated OAuth token to ubuntu) was refused by Claude Code's auto mode as credential leakage — correctly; own-consent-per-host is the pattern.
+
+**Files modified:** `wiki/components/vm101-ubuntu.md`, `wiki/log.md`. Remote: `ubuntu:~/.local/bin/gmail-send`, `~/.venvs/gsuite`, `~/.config/gsuite/`, linger flag.
+
+---
+
 ## 2026-09-15 — Tower: `media-pool/backups/pocket` dataset + GPD Pocket 4 factory image
 
 **What changed:**
