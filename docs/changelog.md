@@ -4,8 +4,9 @@
 
 **What changed:**
 - **pihole (.248)**: 20 Local DNS Records loaded (`pihole-FTL --config dns.hosts`) from the git-tracked `docs/lab-dns-records.list`, which gained the service aliases `frig` · `plex` · `qbit` · `portainer` · `odoo` · `ollama` · `jit` (Gitea) → VM101, `prox` → book5. Phase 1.0 TODO closed.
-- **Pocket**: home Wi-Fi profile pinned to pihole only (`ipv4.ignore-auto-dns yes`) — the Deco hands out `.1` as a second DNS and systemd-resolved had drifted to it, which NXDOMAINs every `.lab` name.
-- Wiki: [[dns-adblocking]] § `.lab` names (mechanism + the Deco-secondary gotcha).
+- **Pocket**: home Wi-Fi profile pinned to pihole only (`ipv4.ignore-auto-dns yes`) — the Archer (gateway `.1`) hands out itself as a second DNS and systemd-resolved had drifted to it, which NXDOMAINs every `.lab` name.
+- Wiki: [[dns-adblocking]] § `.lab` names (mechanism + the gateway-secondary-DNS gotcha).
+- **Tailscale split DNS** `lab → 192.168.68.248` added via the API (first use of the new `~/.secrets/tailscale_api_key`); `.lab` now resolves on the Pocket over `tailscale0`, so it works off-LAN through pi-gw1's subnet route. Verified Linux gotcha: accept-routes on = LAN hairpins via pi-gw1 even at home → SSID-aware dispatcher `pocket/linux/90-tailscale-routes` (pending sudo install).
 
 **Why:** `frig.lab:5000` failed on the Pocket with ERR_NAME_NOT_RESOLVED. The aliases had only ever lived in the Mac's Twingate client; Tailscale was never involved. Decision: Twingate stays off on the Pocket — Tailscale + pihole plug the hole until something proves unreachable.
 

@@ -44,13 +44,26 @@ Local DNS Records**. Source of truth = `docs/lab-dns-records.list` (git-tracked)
 **Twingate resource aliases** resolved by the Mac's Twingate client — nothing else on the
 LAN could see them. Twingate stays off on the Pocket unless something proves unreachable.
 
-> **GOTCHA — Deco hands out `.1` as a second DNS server** (observed on the Pocket
+> **GOTCHA — the Archer (gateway `.1`) hands out itself as a second DNS server** (observed on the Pocket
 > 2026-09-18 despite "Secondary blank"). systemd-resolved sticks to whichever server last
-> answered, and the Deco NXDOMAINs every `.lab` name → "site can't be reached" while pihole
+> answered, and the Archer NXDOMAINs every `.lab` name → "site can't be reached" while pihole
 > answers fine. Fix per Linux client: pin the Wi-Fi profile to pihole only —
 > `nmcli con mod <ssid> ipv4.dns 192.168.68.248 ipv4.ignore-auto-dns yes && nmcli dev reapply <if>`
-> (done on the Pocket, profile `Spaceballs_MLO`). Fleet-wide fix = make the Deco DHCP hand
+> (done on the Pocket, profile `Spaceballs_MLO`). Fleet-wide fix = make the Archer DHCP hand
 > out `.248` alone, if its UI allows.
+
+**Remote (`.lab` from anywhere on the tailnet, 2026-09-18):** Tailscale **split DNS** `lab →
+192.168.68.248` (set via the API, `PATCH /api/v2/tailnet/-/dns/split-dns`; key file
+`~/.secrets/tailscale_api_key`, token "Claude is Everywhere"). MagicDNS hands every `.lab`
+query to pihole; the reply IPs are LAN, reached through **pi-gw1's subnet route**
+(`192.168.68.0/22`, approved). A client must **accept routes** to use it — Linux defaults
+this OFF.
+
+> **GOTCHA — Linux Tailscale prefers the subnet route over the connected LAN** (verified on
+> the Pocket: `ip route get 192.168.68.101` → `dev tailscale0 table 52` while sitting on the
+> home Wi-Fi). With accept-routes on at home, every LAN packet hairpins through pi-gw1
+> (works, ~40 ms, but dies with pi-gw1). Fix = a NetworkManager dispatcher that flips
+> accept-routes off on the home SSID and on elsewhere: `pocket/linux/90-tailscale-routes`.
 
 ## book5 sdwan0 DNS pin + auto-remediation (Twingate resolver failures)
 
