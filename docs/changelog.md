@@ -1,5 +1,14 @@
 # HomeLab Project Changelog
 
+## 2026-09-18 — `.lab` names move from Twingate aliases to Pi-hole Local DNS Records
+
+**What changed:**
+- **pihole (.248)**: 20 Local DNS Records loaded (`pihole-FTL --config dns.hosts`) from the git-tracked `docs/lab-dns-records.list`, which gained the service aliases `frig` · `plex` · `qbit` · `portainer` · `odoo` · `ollama` · `jit` (Gitea) → VM101, `prox` → book5. Phase 1.0 TODO closed.
+- **Pocket**: home Wi-Fi profile pinned to pihole only (`ipv4.ignore-auto-dns yes`) — the Deco hands out `.1` as a second DNS and systemd-resolved had drifted to it, which NXDOMAINs every `.lab` name.
+- Wiki: [[dns-adblocking]] § `.lab` names (mechanism + the Deco-secondary gotcha).
+
+**Why:** `frig.lab:5000` failed on the Pocket with ERR_NAME_NOT_RESOLVED. The aliases had only ever lived in the Mac's Twingate client; Tailscale was never involved. Decision: Twingate stays off on the Pocket — Tailscale + pihole plug the hole until something proves unreachable.
+
 
 ## 2026-09-17 — `gmail-at`: real scheduled mail from VM101 (the Point4 reminder that never fired)
 

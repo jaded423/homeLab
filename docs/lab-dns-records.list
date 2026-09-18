@@ -41,3 +41,16 @@
 
 # Trusted client (wife laptop — pihole bypass group; real MAC, won't rotate)
 192.168.68.59   wife-laptop.lab
+
+# Service aliases (were Twingate resource aliases on the Mac; Pi-hole owns
+# them since 2026-09-18 so every LAN device resolves them, no client needed).
+# All on VM101 unless noted: frig=Frigate:5000 · plex:32400 · qbit:8080 ·
+# portainer:9000 · odoo:8069/8070 · ollama=Open WebUI:3000 · jit=Gitea:3001
+192.168.68.101  frig.lab
+192.168.68.101  plex.lab
+192.168.68.101  qbit.lab
+192.168.68.101  portainer.lab
+192.168.68.101  odoo.lab
+192.168.68.101  ollama.lab
+192.168.68.101  jit.lab
+192.168.68.250  prox.lab

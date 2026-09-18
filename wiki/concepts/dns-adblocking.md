@@ -34,6 +34,24 @@ Network DNS is handed to all clients via **Deco app → DHCP Server → Primary 
 Tailscale MagicDNS (`100.100.100.100`) is **transparent** — it forwards to the DHCP-assigned
 DNS, which is pihole. So devices on the tailnet still get ad-blocking without extra config.
 
+## `.lab` names — Pi-hole Local DNS Records (since 2026-09-18)
+
+`frig.lab`, `plex.lab`, `odoo.lab`, `ha.lab`, `portainer.lab`, `qbit.lab`, `ollama.lab`,
+`jit.lab` (Gitea), `prox.lab` + the infra names (`book5.lab`, `tower.lab`, …) are **Pi-hole
+Local DNS Records**. Source of truth = `docs/lab-dns-records.list` (git-tracked); apply with
+`pihole-FTL --config dns.hosts '[ "IP name", … ]'` on `.248` (v6 stores them in
+`pihole.toml`, NOT `hosts/custom.list`, which FTL regenerates). Before 2026-09-18 these were
+**Twingate resource aliases** resolved by the Mac's Twingate client — nothing else on the
+LAN could see them. Twingate stays off on the Pocket unless something proves unreachable.
+
+> **GOTCHA — Deco hands out `.1` as a second DNS server** (observed on the Pocket
+> 2026-09-18 despite "Secondary blank"). systemd-resolved sticks to whichever server last
+> answered, and the Deco NXDOMAINs every `.lab` name → "site can't be reached" while pihole
+> answers fine. Fix per Linux client: pin the Wi-Fi profile to pihole only —
+> `nmcli con mod <ssid> ipv4.dns 192.168.68.248 ipv4.ignore-auto-dns yes && nmcli dev reapply <if>`
+> (done on the Pocket, profile `Spaceballs_MLO`). Fleet-wide fix = make the Deco DHCP hand
+> out `.248` alone, if its UI allows.
+
 ## book5 sdwan0 DNS pin + auto-remediation (Twingate resolver failures)
 
 book5's Twingate interface (`sdwan0`) must **not** use Twingate's `100.95.0.x` resolvers —
