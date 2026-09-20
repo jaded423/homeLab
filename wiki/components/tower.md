@@ -140,6 +140,15 @@ Full setup, Maxwell-EOL NVENC limits, and the book5 iGPU counterpart → [[gpu-p
 FORWARD policy to DROP, which blocks Twingate-routed cross-host traffic. *(Contains
 iptables rules — update if Docker or the subnet changes.)*
 
+### tailscale serve — sermon demo pages (RETIRED 2026-09-20; was TEMPORARY 2026-09-19)
+Turned off 2026-09-20 (`tailscale serve --https=443 off`; no serve config remains, `/srv/sermons` left in place and stale). The pages now live at **https://sermons.jadedviber.com** — Caddy on pi-gw1, tailnet-only (owner: piGate `networks/home-dryrun.md`; the nightly rsync is `scripts/bin/sermon-nightly.sh`). VM101 was never an option: it is not on the tailnet.
+
+**Prior —** `tailscale serve --bg /srv/sermons` publishes the folder at `https://prox-tower.tail950cc2.ts.net/`
+(tailnet only, auto HTTPS). Holds the `trans -sermon` follow-along pages (YouTube embed + word-level
+karaoke transcript + verse list) copied by hand from the vault so Joshua can review from the phone
+when the Pocket is off/away. **Not the forever home** — VM101 (or a synced dir) takes over once the
+nightly sermon job exists (`trans/TODO.md`). Remove: `tailscale serve --https=443 off`.
+
 ### Twingate connector
 
 ```bash

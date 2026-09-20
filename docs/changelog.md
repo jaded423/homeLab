@@ -1,5 +1,29 @@
 # HomeLab Project Changelog
 
+## 2026-09-20 — Tower: sermon demo `tailscale serve` retired (pages moved to pi-gw1)
+
+**What changed:** `tailscale serve --https=443 off` on tower; `tailscale serve status` → "No serve config". `/srv/sermons` left on disk (stale copy of the 09-19 pages).
+
+**Why:** the pages got a real home the same day — `https://sermons.jadedviber.com`, Caddy on pi-gw1 with the same DNS-01 / name-to-tailnet-IP pattern as `status.jadedviber.com`, fed nightly by `scripts/bin/sermon-nightly.sh` (rsync as `jaded`, no root). VM101, the target named on 09-19, is not on the tailnet (no tailscaled), so a public name → 100.x record cannot point at it.
+
+**Files modified:** `wiki/components/tower.md` (section demoted to Prior), `wiki/log.md`.
+
+---
+
+## 2026-09-19 — Tower: temporary `tailscale serve` for the sermon follow-along pages
+
+**What changed:**
+- `/srv/sermons/` on tower holds the two generated sermon pages (Micah pt2, Esther 4) + a hand-written `index.html`; `tailscale serve --bg /srv/sermons` exposes it at `https://prox-tower.tail950cc2.ts.net/` (tailnet only).
+
+**Why:**
+- The pages are generated on the Pocket, which is hibernated or away half the time; Joshua wants to review them from the phone tomorrow. Tower is always on and already on the tailnet.
+- Explicitly temporary — the nightly sermon job (trans TODO) will sync pages to VM101 for serving; then `tailscale serve --https=443 off` on tower.
+
+**Files modified:**
+- tower `/srv/sermons/*` (new) · `wiki/components/tower.md` § Services · `wiki/log.md`
+
+---
+
 ## 2026-09-18 — `.lab` names move from Twingate aliases to Pi-hole Local DNS Records
 
 **What changed:**

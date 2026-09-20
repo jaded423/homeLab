@@ -7,6 +7,8 @@ related: [index]
 
 # homeLab wiki — log
 
+- **2026-09-20** — [[tower]] § Services: the temporary `tailscale serve /srv/sermons` is OFF; sermon pages moved to `https://sermons.jadedviber.com` (Caddy on pi-gw1, tailnet-only). VM101 ruled out as host: not on the tailnet.
+- **2026-09-19** — [[tower]] § Services: temporary `tailscale serve /srv/sermons` → `https://prox-tower.tail950cc2.ts.net/` hosting the two sermon follow-along pages for phone review; remove once VM101 hosts them.
 - **2026-09-17** — [[vm101-ubuntu]] § Scheduled mail: `gmail-at` replaces the ad-hoc `systemd-run` pattern — persistent, self-cleaning one-shot mail timers from j@jadedviber.com; first real send proven (Point4 reminder, 09:45). Gotcha: a new domain's first mail to a Google mailbox lands in Spam even with SPF+DKIM passing.
 - **2026-09-16** — [[vm101-ubuntu]] § Scheduled mail: the box is now the "home email" sender (j@jadedviber.com, own Internal-app token via ssh-tunnel consent, `gmail-send` helper, linger ON, systemd one-shot proven). brain `ubuntu-gmail-send-helper`.
 - **2026-09-13** — [[book5]] § piGate USB host: a piGate Pi on the dock's USB-C becomes `pigw0` (192.168.7.1/24, NAT via vmbr1, dnsmasq bound to that address, NM unmanaged) — book5 is the reference USB host after the Mac stopped enumerating the gadget (rule + cure in piGate `fleet/FLASH.md`).
