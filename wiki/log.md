@@ -7,6 +7,7 @@ related: [index]
 
 # homeLab wiki — log
 
+- **2026-09-21** — NEW [[ct316-sermons]]: unprivileged LXC on [[tower]] (tailnet `sermons`, no Mullvad) = the sermon archive; dataset `media-pool/media/Sermons` replaces the 55 GB `.mkv` mirror (deleted); nginx serves the audio for a future listen-as-you-read page. Backfilled 22 sermons (371 MB); the Pocket cache dropped 483 → 9.5 MB.
 - **2026-09-20** — [[tower]] § Services: the temporary `tailscale serve /srv/sermons` is OFF; sermon pages moved to `https://sermons.jadedviber.com` (Caddy on pi-gw1, tailnet-only). VM101 ruled out as host: not on the tailnet.
 - **2026-09-19** — [[tower]] § Services: temporary `tailscale serve /srv/sermons` → `https://prox-tower.tail950cc2.ts.net/` hosting the two sermon follow-along pages for phone review; remove once VM101 hosts them.
 - **2026-09-17** — [[vm101-ubuntu]] § Scheduled mail: `gmail-at` replaces the ad-hoc `systemd-run` pattern — persistent, self-cleaning one-shot mail timers from j@jadedviber.com; first real send proven (Point4 reminder, 09:45). Gotcha: a new domain's first mail to a Google mailbox lands in Spam even with SPF+DKIM passing.

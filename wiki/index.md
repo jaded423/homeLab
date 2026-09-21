@@ -30,6 +30,7 @@ per-node docs in `~/.claude/docs/homelab/` were folded in here (2026-07-06).
 | [[vm100-omarchy]] | `omarchy` | 192.168.68.100 | VM 100 — Arch/Omarchy desktop. n8n, Sunshine game-stream. iGPU passthrough. |
 | [[vm101-ubuntu]] | `ubuntu` | 192.168.68.101 | VM 101 — media + services box. Plex/Jellyfin/Ollama/Frigate/qBit/steam-headless/whisper. Mullvad. |
 | [[vm111-homeassistant]] | `ha` | 192.168.68.111 | VM 111 — Home Assistant OS. Hubspace + Frigate + MQTT. |
+| [[ct316-sermons]] | `sermons` | tailnet (DHCP LAN) | CT 316 on tower — sermon archive (mp3 + transcripts on `media-pool/media/Sermons`) + nginx audio host. No Mullvad. |
 | [[pihole]] | `pihole` | 192.168.68.248 | magic-pihole — network DNS + ad-block (Raspberry Pi). |
 
 ### Roaming / edge devices

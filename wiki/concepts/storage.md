@@ -47,7 +47,8 @@ Media lives on [[tower]] at `/media-pool/media/` (ZFS HDD), NFS-mounted on VM 10
 
 - **TV Shows** → `/media-pool/media/Serials/` as `Show Name/Season XX/episodes...`
 - **Movies** → `/media-pool/media/Movies/` (standalone at root, franchises in folders)
-- Plex library roots (inside container, `/mnt/media-pool` → `/media/tower`): Movies=`/media/tower/Movies`, TV=`/media/tower/Serials`, Sermons=`/media/tower/Sermons`
+- **Sermons** → `/media-pool/media/Sermons/` is a dataset since 2026-09-21, owned by [[ct316-sermons]] (per-sermon `audio.mp3` + transcripts, written by the Pocket's nightly). The old 55 GB `.mkv` mirror is gone.
+- Plex library roots (inside container, `/mnt/media-pool` → `/media/tower`): Movies=`/media/tower/Movies`, TV=`/media/tower/Serials`, Sermons=`/media/tower/Sermons` (now empty — the dataset holds mp3s, not video; remove or repoint the library)
 
 Star Wars movies are numbered by in-universe chronology (01-03 prequels, 04-05 anthology, 06-08 originals, 09-11 sequels).
 

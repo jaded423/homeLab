@@ -122,6 +122,7 @@ Full setup, Maxwell-EOL NVENC limits, and the book5 iGPU counterpart → [[gpu-p
 |------|------|-----|-------|
 | 101 | Ubuntu Server | 192.168.68.101 | 48 GB / 28 vCPU, auto-start. Media + Frigate + Mullvad + M4000. → [[vm101-ubuntu]] |
 | 111 | home-assistant | 192.168.68.111 | Renamed from 112 → 111 on 2026-05-27 (moved from book5). → [[vm111-homeassistant]] |
+| 316 | sermons (LXC) | DHCP / tailnet `sermons` | 1 GB, no Mullvad, on the tailnet. Sermon archive (`media-pool/media/Sermons` bind-mounted) + nginx for the audio. Added 2026-09-21. → [[ct316-sermons]] |
 
 ## Services
 
@@ -141,6 +142,10 @@ FORWARD policy to DROP, which blocks Twingate-routed cross-host traffic. *(Conta
 iptables rules — update if Docker or the subnet changes.)*
 
 ### tailscale serve — sermon demo pages (RETIRED 2026-09-20; was TEMPORARY 2026-09-19)
+
+> 2026-09-21: the sermon files now have a real home on this host — [[ct316-sermons]]
+> (audio archive + nginx). The pages stay on pi-gw1. The host's own stale `/srv/sermons`
+> can go.
 Turned off 2026-09-20 (`tailscale serve --https=443 off`; no serve config remains, `/srv/sermons` left in place and stale). The pages now live at **https://sermons.jadedviber.com** — Caddy on pi-gw1, tailnet-only (owner: piGate `networks/home-dryrun.md`; the nightly rsync is `scripts/bin/sermon-nightly.sh`). VM101 was never an option: it is not on the tailnet.
 
 **Prior —** `tailscale serve --bg /srv/sermons` publishes the folder at `https://prox-tower.tail950cc2.ts.net/`
