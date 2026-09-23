@@ -7,6 +7,7 @@ related: [index]
 
 # homeLab wiki — log
 
+- **2026-09-23** — [[pihole]] § PADD: the 7" touchscreen now shows PADD (Pi-hole dashboard) instead of MagicMirror; lightdm disabled, tty1 autologin + `~/.padd-launch.sh`; `jaded` added to the `pihole` group. Revert recipe on the page.
 - **2026-09-21** — NEW [[ct316-sermons]]: unprivileged LXC on [[tower]] (tailnet `sermons`, no Mullvad) = the sermon archive; dataset `media-pool/media/Sermons` replaces the 55 GB `.mkv` mirror (deleted); nginx serves the audio for a future listen-as-you-read page. Backfilled 22 sermons (371 MB); the Pocket cache dropped 483 → 9.5 MB.
 - **2026-09-20** — [[tower]] § Services: the temporary `tailscale serve /srv/sermons` is OFF; sermon pages moved to `https://sermons.jadedviber.com` (Caddy on pi-gw1, tailnet-only). VM101 ruled out as host: not on the tailnet.
 - **2026-09-19** — [[tower]] § Services: temporary `tailscale serve /srv/sermons` → `https://prox-tower.tail950cc2.ts.net/` hosting the two sermon follow-along pages for phone review; remove once VM101 hosts them.

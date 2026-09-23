@@ -26,7 +26,7 @@ MagicDNS forwarding) is cross-cutting → one-liner below + [[dns-adblocking]] o
 full detail. Access model → [[access-model]].
 
 - **Device**: Raspberry Pi 2 Model B — ARM Cortex-A7 (900 MHz quad-core), 1 GB RAM,
-  16 GB+ SD card, 10/100 Ethernet, HDMI (for MagicMirror).
+  16 GB+ SD card, 10/100 Ethernet, official 7" DSI touchscreen (800×480) showing PADD.
 - **Hostname**: magic-pihole (kernel hostname: `raspberrypi`).
 - **OS**: Raspberry Pi OS (NetworkManager).
 - **User**: `jaded` (passwordless sudo).
@@ -149,21 +149,24 @@ ssh book5 "pvecm status"     # should show Qdevice; check from Proxmox
 ssh book5 "pvecm expected 2" # manually adjust expected votes if Pi is offline
 ```
 
-### MagicMirror
+### PADD (Pi-hole dashboard on the 7" screen)
 
-Smart-mirror display on the attached HDMI screen.
-
-| Property | Value |
-|----------|-------|
-| Port | 8080 (local) |
-| Config | `~/MagicMirror/config/config.js` |
+Since 2026-09-23 the attached 7" DSI touchscreen shows **PADD** (Pi-hole ASCII Dashboard,
+v4.1.0), replacing MagicMirror. The desktop is gone: `lightdm` is disabled, tty1 auto-logs
+in `jaded` (raspi-config boot behaviour B2), and `~/.padd-launch.sh` (called from
+`~/.bash_profile` + `~/.profile`, tty1-only, never on ssh) loops `~/padd.sh`. `jaded` is in
+the `pihole` group so PADD reads the local API password from `/etc/pihole/cli_pw`.
+Freed ~150 MB RAM vs the Chromium kiosk.
 
 ```bash
-cd ~/MagicMirror && npm start   # start
-pm2 status                      # status (managed by pm2)
-pm2 restart MagicMirror         # restart
-pm2 logs MagicMirror            # logs
+ssh pihole 'ps -t tty1 -o pid,comm'                        # padd.sh should be there
+ssh pihole 'sudo systemctl restart getty@tty1'             # relaunch the dashboard
+curl -sSL https://raw.githubusercontent.com/pi-hole/PADD/master/padd.sh -o ~/padd.sh  # update
 ```
+
+Revert to the desktop: `sudo systemctl enable lightdm && sudo raspi-config nonint do_boot_behaviour B4`.
+MagicMirror's files are still in `~/MagicMirror` (unused; it ran as `node ./serveronly` +
+a Chromium kiosk on `localhost:8080`).
 
 ### Twingate connector (Docker)
 
@@ -211,7 +214,7 @@ pihole restartdns
 if both Proxmox nodes are up; a single-node failure then causes quorum loss). Check with
 `ssh book5 "pvecm status"`; force `ssh book5 "pvecm expected 2"` if needed.
 
-**MagicMirror blank** — `pm2 status` / `pm2 logs MagicMirror` / `pm2 restart MagicMirror`.
+**7" screen blank / no PADD** — `ssh pihole 'sudo systemctl restart getty@tty1'`; if the API errors, check `jaded` is in the `pihole` group (`id jaded`).
 
 **High CPU/temp** — `vcgencmd measure_temp`, `top`. Gravity updates are CPU-intensive on
 this old Pi.
