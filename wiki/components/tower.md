@@ -122,7 +122,7 @@ Full setup, Maxwell-EOL NVENC limits, and the book5 iGPU counterpart → [[gpu-p
 |------|------|-----|-------|
 | 101 | Ubuntu Server | 192.168.68.101 | 48 GB / 28 vCPU, auto-start. Media + Frigate + Mullvad + M4000. → [[vm101-ubuntu]] |
 | 111 | home-assistant | 192.168.68.111 | Renamed from 112 → 111 on 2026-05-27 (moved from book5). → [[vm111-homeassistant]] |
-| 316 | sermons (LXC) | DHCP / tailnet `sermons` | 1 GB, no Mullvad, on the tailnet. Sermon archive (`media-pool/media/Sermons` bind-mounted) + nginx for the audio. Added 2026-09-21. → [[ct316-sermons]] |
+| ~~316~~ | ~~sermons (LXC)~~ | — | **Moved to [[book5]] 2026-09-23** (suspected link to the Sep 22–23 hangs). `media-pool/media/Sermons` stays as its backup copy. → [[ct316-sermons]] |
 
 ## Services
 

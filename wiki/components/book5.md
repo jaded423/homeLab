@@ -71,6 +71,7 @@ pvecm expected 2      # operate on both nodes if QDevice offline
 | VMID | Name | IP | Notes |
 |------|------|-----|-------|
 | 100 | Omarchy | 192.168.68.100 | Auto-start; iGPU passthrough. See [[vm100-omarchy]] |
+| 316 | sermons (LXC) | 192.168.68.116 | Auto-start; 1 GB (VM100 cut 10→9 GB to fund it, 2026-09-23). Sermon pages + audio behind pi-gw1 Caddy. See [[ct316-sermons]] |
 | CT 103 | Homelable | 192.168.68.61 | Network scanner — see below |
 
 > NOTE: **CT 102 (`trans`)** was DESTROYED 2026-06-19 (LXC deleted to free book5
