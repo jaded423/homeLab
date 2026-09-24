@@ -7,6 +7,7 @@ related: [index]
 
 # homeLab wiki — log
 
+- **2026-09-23** — Flint 3 prepped for the cutover over a cable (SSIDs → Spaceballs, 8 reservations, before/after config backups on the Pocket + book5). Gotcha for [[network-lab]]: with `accept-routes` on, the Pocket reaches the house Archer at `.68.1` via pi-gw1's subnet route instead of the cabled Flint — turn accept-routes off first. House Archer confirmed from its own firmware string as a **BE550 Pro v2** (pi-gw1's inventory said BE9700 — corrected).
 - **2026-09-23** — Router-naming scrub: [[network-topology]] § Router now says **Archer BE550** (since 2026-06-26) with the Deco-era notes folded into a details block and the Flint 3 hop pointed at [[network-lab]]; [[dns-adblocking]], [[pihole]], [[vm111-homeassistant]], index updated. Closes the TODO drift item.
 - **2026-09-23** — [[pihole]] § PADD: the 7" touchscreen now shows PADD (Pi-hole dashboard) instead of MagicMirror; lightdm disabled, tty1 autologin + `~/.padd-launch.sh`; `jaded` added to the `pihole` group. Revert recipe on the page.
 - **2026-09-21** — NEW [[ct316-sermons]]: unprivileged LXC on [[tower]] (tailnet `sermons`, no Mullvad) = the sermon archive; dataset `media-pool/media/Sermons` replaces the 55 GB `.mkv` mirror (deleted); nginx serves the audio for a future listen-as-you-read page. Backfilled 22 sermons (371 MB); the Pocket cache dropped 483 → 9.5 MB.
