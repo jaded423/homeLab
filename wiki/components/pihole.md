@@ -74,7 +74,7 @@ Host 192.168.68.248 pihole pi
 ### Pi-hole (DNS + ad-block) — v6.3.3
 
 Network-wide ad-blocking DNS. **Policy summary**: network DNS = this box (`.248`),
-handed to all clients via the Archer's DHCP-Server → Primary DNS; upstream is local Unbound
+handed to all clients via the Flint 3's DHCP option 6; upstream is local Unbound
 (no third party). Full policy → [[dns-adblocking]].
 
 | Property | Value |
@@ -186,7 +186,7 @@ Docker management UI — http://192.168.68.248:9000 (port 9000).
 
 ## DNS / ad-block policy — one-liner
 
-Clients get pointed at `.248` via **Archer web UI → Advanced → Network → DHCP Server → Primary DNS** (Secondary
+Clients get pointed at `.248` via **the Flint 3's DHCP option 6** (no secondary,
 blank, IPv6 off). Tailscale MagicDNS (`100.100.100.100`) transparently forwards to the
 DHCP DNS (= pihole). [[book5]]'s `sdwan0` NM connection is pinned to `.248` (auto-remediated).
 Phone-away ad-block rides Android Private DNS (DoT) → `dns.jadedviber.com:853` → Twingate

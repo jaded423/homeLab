@@ -1,7 +1,7 @@
 ---
 type: concept
 title: DNS & Ad-Blocking Policy
-tags: [dns, pihole, adblock, twingate, tailscale, archer, dns-over-tls]
+tags: [dns, pihole, adblock, twingate, tailscale, flint3, unbound, dns-over-tls]
 related: [pihole, watchdogs, access-model, go, network-topology, mullvad]
 ---
 
@@ -18,9 +18,13 @@ configured, the gotchas, the auto-remediation). The pihole host/appliance itself
 
 ## Where network DNS is configured (the ONE field that matters)
 
-Network DNS is handed to all clients via **Archer BE550 web UI (or the Tether app) → Advanced → Network → DHCP Server → Primary DNS = `192.168.68.248`**
-(Secondary blank; IPv6 OFF). This is **NOT** the WAN/Internet DNS field. Router = Archer BE550 since
-2026-06-26 (history + Flint 3 plan → [[network-topology]]); any "Deco app" wording elsewhere is stale.
+Network DNS is handed to all clients via **Flint 3 (GL.iNet admin panel → Network → LAN → DHCP, or `uci get dhcp.lan.dhcp_option` = `6,192.168.68.248`)**
+(no secondary; IPv6 RA/DHCPv6 disabled). This is **NOT** the router's own upstream-DNS setting. Router =
+GL.iNet Flint 3 since 2026-09-23 (history → [[network-topology]]); any "Deco app" / "Archer" wording elsewhere is stale.
+
+> **GOTCHA — after a WAN outage / router swap, ads still block but Google/Apple names SERVFAIL for up to
+> 15 min:** unbound's infra cache marked their authoritative servers down during the outage. `ssh pihole
+> 'sudo unbound-control flush_infra all'` clears it instantly (2026-09-23 Flint cutover).
 
 - pihole `.248` is **static**, sitting inside the DHCP pool (`.50`–`71.250`).
 - Spectrum modem is in **bridge mode** (router WAN = public IP, no double-NAT).

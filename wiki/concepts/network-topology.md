@@ -7,8 +7,8 @@ related: [access-model, dns-adblocking, mullvad, book5, tower, pihole, vm101-ubu
 
 # Network Topology
 
-The physical + logical layout of the homelab: one flat `/22` subnet behind a TP-Link
-Archer BE550 router (since 2026-06-26; the Deco BE63 is the Wi-Fi AP layer) in Spectrum bridge mode, a 2.5 GbE backbone between the two Proxmox nodes, and a
+The physical + logical layout of the homelab: one flat `/22` subnet behind a GL.iNet
+Flint 3 router (since 2026-09-23; Archer BE550 Pro v2 retired, the Deco BE63 is the Wi-Fi AP layer) in Spectrum bridge mode, a 2.5 GbE backbone between the two Proxmox nodes, and a
 structured IP scheme. Reachability (SSH/Tailscale/Twingate) → [[access-model]]; DNS →
 [[dns-adblocking]]; VPN egress → [[mullvad]].
 
@@ -21,7 +21,7 @@ structured IP scheme. Reachability (SSH/Tailscale/Twingate) → [[access-model]]
 
 - **Subnet:** `192.168.68.0/22` — a single unified network (one flat L2/L3 domain).
 - **IP scheme:** `250s` = Proxmox / infra · `100s` = VMs · `70s` = Cameras / IoT.
-- **DHCP pool:** `192.168.69.0`–`192.168.71.254` (handed by the Archer).
+- **DHCP pool:** `192.168.69.0`–`192.168.71.254` (handed by the Flint 3).
 - **Static space = `192.168.68.x`** — *outside* the DHCP pool. The router can never hand out a
   `.68.x` address, so **statics cannot collide with DHCP** and need no Address Reservation.
 - **Statics are set PER-MACHINE (client-side), not at the router.** Each host pins its own
@@ -41,7 +41,7 @@ one-line pointer — full reachability model is in [[access-model]].
 
 | Resource | IP | Access / notes |
 |----------|-----|----------------|
-| Archer BE550 router (gateway) | 192.168.68.1 | Router + DHCP + NAT since 2026-06-26 (web UI / Tether app). The Deco BE63 ("Kitchen", MAC `8C:86:DD:E8:C2:EA`) is now the Wi-Fi AP layer, not the gateway |
+| **GL.iNet Flint 3 (GL-BE9300) router (gateway)** | 192.168.68.1 | Router + DHCP + NAT since **2026-09-23** (LAN MAC `94:83:C4:BE:39:02`, WAN `94:83:C4:BE:39:00`; admin panel http://192.168.68.1, ssh root). The Deco BE63 ("Kitchen", MAC `8C:86:DD:E8:C2:EA`) is the Wi-Fi AP layer, not the gateway |
 | Office switch (behind the router → book5, tower, pihole) | *(none)* | **Unmanaged** TP-Link 2.5G unit, MAC `10:5a:95:39:11:6f` — no IP, no LLDP/STP, only Realtek RRCP loop-detect broadcasts (checked from book5 2026-09-10, method in [[network-lab]]). Model to read off the label at the Flint cutover |
 | [[book5]] (prox-book5) | 192.168.68.250 | `ssh book5`. Proxmox node 1 |
 | [[tower]] (prox-tower) | 192.168.68.249 | `ssh tower`. Proxmox node 2 |
@@ -75,18 +75,28 @@ one-line pointer — full reachability model is in [[access-model]].
   free book5 resources — gone, not down). `trans` work runs ad-hoc now.
 - **Samba** — RETIRED 2026-05-27 (smbd disabled on book5).
 
-## Router (Archer BE550) + modem bridge mode
+## Router (Flint 3) + modem bridge mode
 
-**Router history:** Deco BE63 (router mode) until **2026-06-26** → **TP-Link Archer BE550** (current;
-swap details in `TODO.md` § Post-Archer-cutover + `docs/network-rebuild-2026.md`) → **GL.iNet Flint 3**
-(planned gateway; the Archer + Decos become APs) → [[network-lab]]. When a doc says "Deco app" for a
-router setting, it is stale: the setting now lives in the Archer's web UI / Tether app.
+**Router history:** Deco BE63 (router mode) until **2026-06-26** → **TP-Link Archer BE550 Pro v2**
+(2026-06-26 → 2026-09-23; now retired/off, AP-mode candidate) → **GL.iNet Flint 3 (GL-BE9300), current since
+2026-09-23** (cutover notes: `TODO.md` § Flint 3 router cutover; lab + VLAN plan: [[network-lab]]). When a doc
+says "Deco app" or "Archer web UI" for a router setting, it is stale: the setting lives on the Flint (GL admin
+panel at `http://192.168.68.1`, LuCI underneath, `uci` over ssh as root).
 
-- **Router:** TP-Link **Archer BE550** (Wi-Fi 7) at `192.168.68.1`, LAN `/22`, DHCP pool
-  `.69.0`–`.71.254`, DHCP Primary DNS `.248`. Unlike the Deco it **can** disable its DHCP server
-  and do Address Reservations from a real web UI — the unlock for pihole-DHCP (TODO Phase 2.0).
-- **Modem:** Spectrum modem is in **bridge mode** → the Archer's WAN gets the public IP, **no
-  double-NAT**.
+- **Router:** **GL.iNet Flint 3** (GL-BE9300, OpenWrt-based GL firmware 4.9.0, Wi-Fi 7) at `192.168.68.1`,
+  LAN `/22`, DHCP pool `.69.1`–`.71.254` (12 h leases), DHCP option 6 = pihole `.248`, rebind protection OFF
+  (so pihole's `.lab` answers pass), UPnP off, remote admin off, WAN input DROP, no DNS override. Static
+  leases: macAir, PetCam/Porch/DoorCam `.68.75/.76/.77`, tower plug `.69.178`, plug2 `.71.103`, pi-gw1
+  `.71.85`, Windows box `.70.239`. SSIDs **Spaceballs** (2.4/5/6 GHz) + **Spaceballs_MLO** (MLO, all bands),
+  house key. Config backups: Pocket `~/backups/flint/` + book5 `/root/network-lab/`.
+- **Gotcha — working on the Flint from a cable while Tailscale accepts routes:** pi-gw1 advertises
+  `192.168.68.0/22`, and Tailscale's table 52 beats the cable, so `.68.1` silently lands on whatever router
+  is live in the house. `sudo tailscale set --accept-routes=false` first (found 2026-09-23).
+- **Gotcha — after any WAN outage, pihole SERVFAILs the busy names** (google, apple push) for up to 15 min:
+  unbound's infra cache marked their nameservers down while the WAN was gone. Fix: `sudo unbound-control
+  flush_infra all` on pihole (or wait). Also in [[dns-adblocking]].
+- **Modem:** Spectrum modem is in **bridge mode** → the Flint's WAN (`eth0`, DHCP) gets the public IP,
+  **no double-NAT**. Power-cycle the modem when the router changes (it binds to the first MAC it sees).
 - **Deco BE63 (AP layer):** the surviving unit (the 2nd was destroyed in the 2026-06-19 surge)
   provides Wi-Fi under the Archer; Deco-app settings are cosmetic/AP-only now.
 
@@ -104,8 +114,8 @@ router setting, it is stale: the setting now lives in the Archer's web UI / Teth
 
 </details>
 
-> DNS handed to clients via **Archer BE550 web UI (or the Tether app) → Advanced → Network → DHCP Server → Primary DNS = `192.168.68.248`**
-> (pihole), NOT the WAN/Internet DNS field. Full DNS chain,
+> DNS handed to clients via **Flint 3 (GL.iNet admin panel → Network → LAN → DHCP, or `uci get dhcp.lan.dhcp_option` = `6,192.168.68.248`)**
+> (pihole), NOT the router's own upstream-DNS setting. Full DNS chain,
 > Mullvad-config edits, and the "ads returned" checklist → [[dns-adblocking]].
 
 ## 2.5 GbE `vmbr1` backbone
@@ -139,8 +149,8 @@ both Proxmox nodes moved to their 2.5 GbE primary interfaces (`vmbr1`).
 
 ## Rebuild 2026 (Archer BE550 + wired Deco APs)
 
-**Status: router swap DONE 2026-06-26**; cabling + AP demotion + reservations still open in
-`TODO.md` § Post-Archer-cutover; the next hop (Flint 3 as gateway) is [[network-lab]]. Spurred by
+**Status: Archer swap DONE 2026-06-26; Flint 3 swap DONE 2026-09-23** (Archer retired). Cabling, AP
+demotion of the Deco/Archer, and VLANs still open in `TODO.md`; the lab track is [[network-lab]]. Spurred by
 the 2026-06-19 lightning strike. Direction: a **TP-Link Archer BE550** becomes the router/brain
 (config-as-code, real DHCP, port-forward, VPN control — escaping the Deco app's no-API
 limitation), with the **2× Deco BE63 demoted to Access Point mode** on **true wired
