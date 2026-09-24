@@ -44,7 +44,7 @@ Full watchdog detail lives in [[watchdogs]]; Frigate itself is on [[vm101-ubuntu
 ## Networking
 
 - **Static `192.168.68.111/22`, pinned INSIDE the guest** (2026-07-16). Per the
-  [[network-topology]] rule, `.68.x` is static space the Deco's DHCP pool (`.69.0`–`.71.254`)
+  [[network-topology]] rule, `.68.x` is static space the router's (Archer) DHCP pool (`.69.0`–`.71.254`)
   cannot reach — so the pin lives on the host, not the router. Guest iface `enp6s18`,
   Supervisor-managed NM profile `Supervisor enp6s18`:
   ```bash

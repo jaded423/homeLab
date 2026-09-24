@@ -1,14 +1,14 @@
 ---
 type: concept
 title: Network Topology — the physical/logical homelab network
-tags: [network, subnet, ip-scheme, deco, router, vmbr1, 2.5gbe, migration]
+tags: [network, subnet, ip-scheme, archer, deco, router, vmbr1, 2.5gbe, migration]
 related: [access-model, dns-adblocking, mullvad, book5, tower, pihole, vm101-ubuntu, vm111-homeassistant, vm100-omarchy]
 ---
 
 # Network Topology
 
-The physical + logical layout of the homelab: one flat `/22` subnet behind a Deco
-router in Spectrum bridge mode, a 2.5 GbE backbone between the two Proxmox nodes, and a
+The physical + logical layout of the homelab: one flat `/22` subnet behind a TP-Link
+Archer BE550 router (since 2026-06-26; the Deco BE63 is the Wi-Fi AP layer) in Spectrum bridge mode, a 2.5 GbE backbone between the two Proxmox nodes, and a
 structured IP scheme. Reachability (SSH/Tailscale/Twingate) → [[access-model]]; DNS →
 [[dns-adblocking]]; VPN egress → [[mullvad]].
 
@@ -21,13 +21,13 @@ structured IP scheme. Reachability (SSH/Tailscale/Twingate) → [[access-model]]
 
 - **Subnet:** `192.168.68.0/22` — a single unified network (one flat L2/L3 domain).
 - **IP scheme:** `250s` = Proxmox / infra · `100s` = VMs · `70s` = Cameras / IoT.
-- **DHCP pool:** `192.168.69.0`–`192.168.71.254` (handed by the Deco).
-- **Static space = `192.168.68.x`** — *outside* the DHCP pool. The Deco can never hand out a
+- **DHCP pool:** `192.168.69.0`–`192.168.71.254` (handed by the Archer).
+- **Static space = `192.168.68.x`** — *outside* the DHCP pool. The router can never hand out a
   `.68.x` address, so **statics cannot collide with DHCP** and need no Address Reservation.
 - **Statics are set PER-MACHINE (client-side), not at the router.** Each host pins its own
   `.68.x` in its own network stack (NM/nmcli, `ha network update`, ONVIF for the Tapo cams).
   There is no router-side reservation to check — if a `.68.x` host drifts, the fix is on the
-  *host*, not the Deco.
+  *host*, not the router.
 - **Corollary — the drift signature:** any host left on DHCP (`ipv4.method: auto`) gets pulled
   into `.69`–`.71` and vanishes from its expected `.68.x`. That is a *host misconfig*, not a
   network fault. Seen on [[vm111-homeassistant]] 2026-07-16 (`.68.111` → `.71.49`).
@@ -41,7 +41,7 @@ one-line pointer — full reachability model is in [[access-model]].
 
 | Resource | IP | Access / notes |
 |----------|-----|----------------|
-| Deco main router (gateway) | 192.168.68.1 | BE63, unit named "Kitchen", MAC `8C:86:DD:E8:C2:EA`. Gateway + DHCP + NAT |
+| Archer BE550 router (gateway) | 192.168.68.1 | Router + DHCP + NAT since 2026-06-26 (web UI / Tether app). The Deco BE63 ("Kitchen", MAC `8C:86:DD:E8:C2:EA`) is now the Wi-Fi AP layer, not the gateway |
 | Office switch (behind the router → book5, tower, pihole) | *(none)* | **Unmanaged** TP-Link 2.5G unit, MAC `10:5a:95:39:11:6f` — no IP, no LLDP/STP, only Realtek RRCP loop-detect broadcasts (checked from book5 2026-09-10, method in [[network-lab]]). Model to read off the label at the Flint cutover |
 | [[book5]] (prox-book5) | 192.168.68.250 | `ssh book5`. Proxmox node 1 |
 | [[tower]] (prox-tower) | 192.168.68.249 | `ssh tower`. Proxmox node 2 |
@@ -63,7 +63,7 @@ one-line pointer — full reachability model is in [[access-model]].
 | Wife laptop | 192.168.68.59 | pihole full-**bypass** client (MAC `74:13:ea:0f:c1:6b`) — see [[dns-adblocking]] |
 
 > Phones/tablets/IoT on `.52 .57 .62 .66 .67 .70 .71 .72` use **MAC randomization** —
-> their IP + Deco name drift on reconnect, so they aren't reserved/named. Fixed-MAC infra
+> their IP + client name drift on reconnect, so they aren't reserved/named. Fixed-MAC infra
 > gets stable reservations; full canonical name↔MAC map in `docs/deco-device-naming.md`.
 
 ### Historical / destroyed nodes
@@ -75,13 +75,23 @@ one-line pointer — full reachability model is in [[access-model]].
   free book5 resources — gone, not down). `trans` work runs ad-hoc now.
 - **Samba** — RETIRED 2026-05-27 (smbd disabled on book5).
 
-## Router (Deco) + modem bridge mode
+## Router (Archer BE550) + modem bridge mode
 
-- **Router:** TP-Link **Deco BE63** (Wi-Fi 7) in **Wi-Fi Router mode** at `192.168.68.1`.
-  Currently a **single unit** — the 2nd AP (mesh satellite) was destroyed in the 2026-06-19
-  surge and not yet replaced. Firmware 1.3.2, Deco app v3.10.215 (as of 2026-06-23).
-- **Modem:** Spectrum modem is in **bridge mode** → Deco WAN gets the public IP, **no
+**Router history:** Deco BE63 (router mode) until **2026-06-26** → **TP-Link Archer BE550** (current;
+swap details in `TODO.md` § Post-Archer-cutover + `docs/network-rebuild-2026.md`) → **GL.iNet Flint 3**
+(planned gateway; the Archer + Decos become APs) → [[network-lab]]. When a doc says "Deco app" for a
+router setting, it is stale: the setting now lives in the Archer's web UI / Tether app.
+
+- **Router:** TP-Link **Archer BE550** (Wi-Fi 7) at `192.168.68.1`, LAN `/22`, DHCP pool
+  `.69.0`–`.71.254`, DHCP Primary DNS `.248`. Unlike the Deco it **can** disable its DHCP server
+  and do Address Reservations from a real web UI — the unlock for pihole-DHCP (TODO Phase 2.0).
+- **Modem:** Spectrum modem is in **bridge mode** → the Archer's WAN gets the public IP, **no
   double-NAT**.
+- **Deco BE63 (AP layer):** the surviving unit (the 2nd was destroyed in the 2026-06-19 surge)
+  provides Wi-Fi under the Archer; Deco-app settings are cosmetic/AP-only now.
+
+<details><summary>Deco-era notes (router until 2026-06-26)</summary>
+
 - **DHCP:** The Deco BE63 **cannot disable its DHCP server while in router mode**
   (firmware product decision, not a hidden toggle — TP-Link: *"no intention to disable
   DHCP under wireless router mode"*). Moving DHCP to pihole/OPNsense would require demoting
@@ -92,8 +102,10 @@ one-line pointer — full reachability model is in [[access-model]].
   `Computer_XXXX` defaults (auto-name = last 4 hex of the MAC). Recovery sheet +
   canonical name/MAC map: `docs/deco-device-naming.md`. Cloud Auto Backup now ON (2026-06-23).
 
-> DNS handed to clients via **Deco app → DHCP Server → Primary DNS = `192.168.68.248`**
-> (pihole), NOT the WAN/IPv4 DNS field (Deco rejects a LAN IP there). Full DNS chain,
+</details>
+
+> DNS handed to clients via **Archer BE550 web UI (or the Tether app) → Advanced → Network → DHCP Server → Primary DNS = `192.168.68.248`**
+> (pihole), NOT the WAN/Internet DNS field. Full DNS chain,
 > Mullvad-config edits, and the "ads returned" checklist → [[dns-adblocking]].
 
 ## 2.5 GbE `vmbr1` backbone
@@ -125,10 +137,11 @@ both Proxmox nodes moved to their 2.5 GbE primary interfaces (`vmbr1`).
 > **pre-migration historical** — ignore it for current state. This `/22` layout is
 > authoritative.
 
-## Planned rebuild (Archer BE550 + wired Deco APs)
+## Rebuild 2026 (Archer BE550 + wired Deco APs)
 
-**Status: PLANNED** (cabling started weekend of 2026-06-27; spurred by the 2026-06-19
-lightning strike). Direction: a **TP-Link Archer BE550** becomes the router/brain
+**Status: router swap DONE 2026-06-26**; cabling + AP demotion + reservations still open in
+`TODO.md` § Post-Archer-cutover; the next hop (Flint 3 as gateway) is [[network-lab]]. Spurred by
+the 2026-06-19 lightning strike. Direction: a **TP-Link Archer BE550** becomes the router/brain
 (config-as-code, real DHCP, port-forward, VPN control — escaping the Deco app's no-API
 limitation), with the **2× Deco BE63 demoted to Access Point mode** on **true wired
 backhaul** (no wireless mesh hop). Office becomes a wired island after the coax is

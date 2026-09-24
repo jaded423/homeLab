@@ -211,7 +211,7 @@ nvidia-smi
 docker logs <container>; df -h; docker compose up -d --force-recreate <container>
 ```
 
-Also: `yt-dlp` at `~/.local/bin/yt-dlp`. Do **NOT** add VM101 to the Deco VPN Client List —
+Also: `yt-dlp` at `~/.local/bin/yt-dlp`. Do **NOT** add VM101 to the router's VPN Client List (Deco-era note; same rule on the Archer) —
 it conflicts with the native Mullvad client (Mullvad's firewall rules block Deco's outer
 tunnel → `Cannot reach the API`). See [[mullvad]].
 

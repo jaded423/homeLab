@@ -49,12 +49,12 @@ per-node docs in `~/.claude/docs/homelab/` were folded in here (2026-07-06).
 
 | Page | What |
 |---|---|
-| [[network-topology]] | Subnet 192.168.68.0/22, IP scheme, device table, Deco mesh + bridge mode, 2.5G vmbr1, Feb-2026 migration. |
+| [[network-topology]] | Subnet 192.168.68.0/22, IP scheme, device table, Archer BE550 router (Deco = AP layer) + modem bridge mode, 2.5G vmbr1, Feb-2026 migration. |
 | [[access-model]] | Tailscale-primary / Twingate-media split, `device` vs `device-local` aliases, ProxyJump map, MagicDNS web UIs, reverse-tunnel roaming. |
 | [[network-segmentation]] | **VLAN plan + hardware decision (2026-08-07).** Three layers (tag/route/policy), the four labels, why Pi-hole can't enforce, Flint 3 vs UniFi vs OPNsense, AP tagging limits, live practice lab on tower. |
 | [[network-lab]] | **Career-practice lab (2026-09-10).** Three blast-radius tiers (tower sandbox → Flint 3 island on `10.68/16` → production), instruments (pi-gw2 + Kuma, netwatch, OpenWrt CLI), 12 exercises from island bring-up through rogue DHCP, loops, VLAN trunks, Deco-as-AP, DNS redirect, to the timed cutover. |
 | [[terminal-lab]] | **Terminal lab (2026-09-11).** The layer between a program and the pixels: TERM → terminfo (`tic`/`infocmp`/`tput`) → ncurses → escape sequences → emulator. 10 tier-0 exercises (degrade TERM, reproduce the `xterm-ghostty` fault, raw vs `tput`, color tiers, key sequences, tmux in the middle, size/SIGWINCH, the Linux console, a YSAP-style TUI + `reset`, pipe-vs-tty) and the man-page reading order. |
-| [[dns-adblocking]] | pihole `.248` via Deco DHCP DNS, the "ads returned?" gotcha, sdwan0 pin auto-remediation, bypass group. |
+| [[dns-adblocking]] | pihole `.248` via the Archer's DHCP DNS, the "ads returned?" gotcha, sdwan0 pin auto-remediation, bypass group. |
 | [[mullvad]] | VM101 hop-swappable exit (STO single-hop ↔ US-Dallas multihop for games), lockdown-always-on. |
 | [[watchdogs]] | book5 net-health/cpu watchdogs, tower crash instrumentation + kernel pin, VM101 Frigate autoheal. |
 | [[storage]] | VM101 media tiers, 3.2T NFS pool, scan-and-move pipeline, Google Drive integration. |
