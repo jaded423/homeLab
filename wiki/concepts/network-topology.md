@@ -41,7 +41,7 @@ one-line pointer — full reachability model is in [[access-model]].
 
 | Resource | IP | Access / notes |
 |----------|-----|----------------|
-| **GL.iNet Flint 3 (GL-BE9300) router (gateway)** | 192.168.68.1 | Router + DHCP + NAT since **2026-09-23** (LAN MAC `94:83:C4:BE:39:02`, WAN `94:83:C4:BE:39:00`; admin panel http://192.168.68.1, ssh root). The Deco BE63 ("Kitchen", MAC `8C:86:DD:E8:C2:EA`) is the Wi-Fi AP layer, not the gateway |
+| **GL.iNet Flint 3 (GL-BE9300) router (gateway)** | 192.168.68.1 | Router + DHCP + NAT since **2026-09-23** (LAN MAC `94:83:C4:BE:39:02`, WAN `94:83:C4:BE:39:00`; admin panel http://192.168.68.1, ssh root — password file `~/.secrets/flint_admin` on the Pocket, 600, read with `sshpass -f`, never exported). The Deco BE63 ("Kitchen", MAC `8C:86:DD:E8:C2:EA`) is the Wi-Fi AP layer, not the gateway |
 | Office switch (behind the router → book5, tower, pihole) | *(none)* | **Unmanaged** TP-Link 2.5G unit, MAC `10:5a:95:39:11:6f` — no IP, no LLDP/STP, only Realtek RRCP loop-detect broadcasts (checked from book5 2026-09-10, method in [[network-lab]]). Model to read off the label at the Flint cutover |
 | [[book5]] (prox-book5) | 192.168.68.250 | `ssh book5`. Proxmox node 1 |
 | [[tower]] (prox-tower) | 192.168.68.249 | `ssh tower`. Proxmox node 2 |

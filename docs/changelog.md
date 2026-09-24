@@ -1,5 +1,32 @@
 # HomeLab Project Changelog
 
+## 2026-09-23 — Flint 3 becomes the house router; pihole's 7" screen shows PADD; Pi-hole 6.4.3
+
+**What changed:**
+- **Router cutover (~20:47):** GL.iNet Flint 3 (GL-BE9300, GL firmware 4.9.0) replaced the Archer BE550 Pro v2 at the modem. Prepped over a cable from the Pocket beforehand: radios renamed GL24/GL5/GL6 → `Spaceballs` (2.4/5/6 GHz) and MLO enabled as `Spaceballs_MLO` (house key already matched); 7 DHCP reservations added beside the existing macAir one (PetCam/Porch/DoorCam `.68.75/.76/.77`, tower Tapo plug `.69.178`, plug2 `.71.103`, pi-gw1 `.71.85`, Windows box `.70.239`); clock set; before/after config backups (`sysupgrade -b`) saved to the Pocket `~/backups/flint/` and `book5:/root/network-lab/` (satisfies the lab-item `verify:` line). Checked clean: DHCP option 6 = pihole `.248`, rebind protection off, no DNS hijack rule, UPnP off, remote admin off, WAN input DROP, TZ Chicago.
+- **Post-cutover verification:** gateway MAC `94:83:C4` (Flint), public WAN IP, NTP synced, 11 leases in 5 min, Proxmox hosts + cameras up on reserved IPs, ads blocked, Archer gone from the LAN.
+- **pihole (Pi 2):** the 7" DSI touchscreen now shows **PADD v4.1.0** instead of MagicMirror — `lightdm` disabled, tty1 autologin (`raspi-config nonint do_boot_behaviour B2`), `~/.padd-launch.sh` from `~/.bash_profile`/`~/.profile` (tty1-only), `jaded` added to the `pihole` group so PADD reads `/etc/pihole/cli_pw`. MagicMirror's `node ./serveronly` + Chromium kiosk killed by PID; files left in `~/MagicMirror`. ~150 MB RAM freed.
+- **Pi-hole updated** 6.2.2 → 6.4.3 (Web 6.6, FTL 6.7.1) via `pihole -up` under nohup (no tmux on the box); ~3 min of no new lookups house-wide during the FTL restart, as predicted.
+- **Wiki:** router-naming drift scrub (Deco → Archer, then Archer → Flint the same night): `network-topology` § Router rewritten with the full lineage Deco BE63 (→2026-06-26) → Archer BE550 Pro v2 (→2026-09-23) → Flint 3; `dns-adblocking`, `pihole`, `vm111`, `index` re-pointed. Closes the TODO drift item.
+
+**Why:**
+- The Flint was already configured on the house scheme; only the SSIDs, reservations and a backup stood between it and a smooth swap. Doing the Pi-hole update first removed a variable before the router changed.
+- MagicMirror on a Pi 2 was unusable (Electron with no GPU help); PADD is the box's natural dashboard.
+
+**Files modified:**
+- `wiki/concepts/network-topology.md`, `wiki/concepts/dns-adblocking.md`, `wiki/components/pihole.md`, `wiki/components/vm111-homeassistant.md`, `wiki/components/vm101-ubuntu.md`, `wiki/index.md`, `wiki/log.md` — current state (three log lines)
+- pihole: `/etc/systemd/system/getty@tty1.service.d/autologin.conf`, `~/.padd-launch.sh`, `~/.bash_profile`, `~/.profile`, `~/padd.sh`; lightdm disabled
+- Flint 3: `/etc/config/{wireless,mlo,dhcp}` via `uci`
+- Pocket: `~/.secrets/flint_admin` (600, the Flint admin password — no shell export), NM profile `flint-lab` (ethernet, never-default, no DNS) for cabled router work, `~/backups/flint/`
+
+**Technical notes:**
+- **Tailscale route hijack:** with `accept-routes` on, pi-gw1's advertised `192.168.68.0/22` lives in Tailscale's table 52, which beats the cable's link route — every probe at `.68.1` landed on the *house* Archer (TP-Link UI, `tplinkwifi.net` cert) while a GL.iNet MAC answered ARP. `sudo tailscale set --accept-routes=false` before cabled router work. Routes re-appeared once mid-session without Joshua touching them — cause not yet found (open).
+- **unbound infra cache after a WAN gap:** for ~10 min after the swap pihole returned SERVFAIL for the chatty names (google, apple push, tplink) — ~8% of queries — because unbound had marked their nameservers down while the WAN was unplugged. `sudo unbound-control flush_infra all` cleared it instantly. Now a gotcha on `dns-adblocking` and `network-topology`.
+- pi-gw1's Sept-10 inventory called the house router a BE9700; the Archer's own firmware string says `BE550PROv2_1.12.1`. Corrected in piGate.
+- Brain: `router-history-flint3` (supersedes `router-history-archer`).
+
+---
+
 ## 2026-09-20 — Tower: sermon demo `tailscale serve` retired (pages moved to pi-gw1)
 
 **What changed:** `tailscale serve --https=443 off` on tower; `tailscale serve status` → "No serve config". `/srv/sermons` left on disk (stale copy of the 09-19 pages).
