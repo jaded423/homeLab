@@ -47,7 +47,7 @@ public site never needs the mp3 because the pages play from YouTube. Reach = **C
 through, so nginx picks this block); no router port is opened and the house IP stays hidden. Only the
 hostname routed in the tunnel is public — `sermons.` stays tailnet-only by construction. The
 `cornerstone.jadedviber.com` name was pi-gw2's Kuma status URL (piGate `networks/cbw.md`) until 2026-09-27;
-repurposed for this. Hand-off later = rsync `/srv/sermons-public` to the church's host.
+repurposed for this. **Short name `cbw.jadedviber.com`** (2026-09-27) = a second route on the same tunnel → nginx block `sites-available/sermons-cbw` → `301` to cornerstone with the path kept, so phones see ONE origin (one PWA install). The app's own repo + relocation plan: `~/.claude/plans/sermons-standalone.md`.
 Verify: `curl -s -o /dev/null -w '%{http_code}\n' https://cornerstone.jadedviber.com/` → `200` from off-tailnet;
 `curl -s https://cornerstone.jadedviber.com/<slug>.html | grep -c 'class="vn"'` → `0`.
 
