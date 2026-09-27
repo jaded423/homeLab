@@ -43,7 +43,7 @@ with the ESV text removed (every reference stays; each becomes a "Read … on es
 `--delete` for html/json. Served by a second nginx block (`sites-available/sermons-public`: `server_name
 cornerstone.jadedviber.com`, no autoindex, `*.srt/*.txt/*.env/*.mp3` → 404, same LAN-only allow) — the
 public site never needs the mp3 because the pages play from YouTube. Reach = **Cloudflare Tunnel on
-[[pi-gw1]]** (`cloudflared` service → origin `http://192.168.68.116:80`, original Host header passed
+[[pi-gw1]]** (live 2026-09-27; tunnel `pi-gw1` on the jaded423@ Cloudflare account's Zero Trust Free plan, token `~/.secrets/cf_tunnel_cornerstone` on the Pocket; `cloudflared` systemd service → origin `http://192.168.68.116:80`, original Host header passed
 through, so nginx picks this block); no router port is opened and the house IP stays hidden. Only the
 hostname routed in the tunnel is public — `sermons.` stays tailnet-only by construction. The
 `cornerstone.jadedviber.com` name was pi-gw2's Kuma status URL (piGate `networks/cbw.md`) until 2026-09-27;
