@@ -36,20 +36,20 @@ from `lxc-device` at this CT's vmbr0→vmbr1 re-bridge. Suspected (unproven): in
 netns churn. Moved off tower + Tailscale stripped to isolate it; tower stability watch in homeLab TODO.
 Tower-era config: `tower:/root/316.conf.pre-move-2026-09-23`.
 
-**Public copy (added 2026-09-27) — `/srv/sermons-public` → https://cornerstone.jadedviber.com.** Same pages
+**Public copy (added 2026-09-27) — `/srv/sermons-public` → https://cbw.jadedviber.com** (canonical since 2026-09-27 evening; `cornerstone.jadedviber.com` 301s to it, path kept). Same pages
 with the ESV text removed (every reference stays; each becomes a "Read … on esv.org" link, pages carry
 `noindex` while the church is phone-testing). Built on the Pocket by `scripts/bin/sermon-public.py` inside
 `sermon-nightly.sh` (`SERMON_PUBLIC`; the build refuses to publish if any verse text survives) and rsynced
 `--delete` for html/json. Served by a second nginx block (`sites-available/sermons-public`: `server_name
-cornerstone.jadedviber.com`, no autoindex, `*.srt/*.txt/*.env/*.mp3` → 404, same LAN-only allow) — the
+cbw.jadedviber.com`, no autoindex, `*.srt/*.txt/*.env/*.mp3` → 404, same LAN-only allow) — the
 public site never needs the mp3 because the pages play from YouTube. Reach = **Cloudflare Tunnel on
 [[pi-gw1]]** (live 2026-09-27; tunnel `pi-gw1` on the jaded423@ Cloudflare account's Zero Trust Free plan, token `~/.secrets/cf_tunnel_cornerstone` on the Pocket; `cloudflared` systemd service → origin `http://192.168.68.116:80`, original Host header passed
 through, so nginx picks this block); no router port is opened and the house IP stays hidden. Only the
 hostname routed in the tunnel is public — `sermons.` stays tailnet-only by construction. The
 `cornerstone.jadedviber.com` name was pi-gw2's Kuma status URL (piGate `networks/cbw.md`) until 2026-09-27;
-repurposed for this. **Short name `cbw.jadedviber.com`** (2026-09-27) = a second route on the same tunnel → nginx block `sites-available/sermons-cbw` → `301` to cornerstone with the path kept, so phones see ONE origin (one PWA install). The app's own repo + relocation plan: `~/.claude/plans/sermons-standalone.md`.
-Verify: `curl -s -o /dev/null -w '%{http_code}\n' https://cornerstone.jadedviber.com/` → `200` from off-tailnet;
-`curl -s https://cornerstone.jadedviber.com/<slug>.html | grep -c 'class="vn"'` → `0`.
+repurposed for this. **Both names are routes on the same tunnel** (origin `http://192.168.68.116:80`, Host header passed); `sites-available/sermons-cornerstone-redirect` = the `301` block, so phones see ONE origin (one PWA install). Inverted from cornerstone→cbw to cbw-canonical the same evening (aesthetics, Joshua). The app's own repo + relocation plan: `~/.claude/plans/sermons-standalone.md`.
+Verify: `curl -s -o /dev/null -w '%{http_code}\n' https://cbw.jadedviber.com/` → `200` from off-tailnet, cornerstone → `301`;
+`curl -s https://cbw.jadedviber.com/<slug>.html | grep -c 'class="vn"'` → `0`.
 
 **Verify:** `ssh sermons 'du -sh /srv/sermons; ls /srv/sermons/*/audio.mp3 | wc -l'` ·
 `curl -sI -r 0-1023 https://sermons.jadedviber.com/<slug>/audio.mp3` → `206`, `server: nginx`, `via: 1.1 Caddy`.
