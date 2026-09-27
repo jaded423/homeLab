@@ -3,7 +3,7 @@ type: component
 title: CT 316 — sermons (pages + audio host)
 host: sermons
 ip: 192.168.68.116 (static, LAN-only)
-tags: [lxc, ct316, sermons, nginx, caddy, book5, pi-gw1, archive]
+tags: [lxc, ct316, sermons, nginx, caddy, cloudflared, book5, pi-gw1, archive, cornerstone]
 related: [book5, tower, pi-gw1, access-model, storage]
 ---
 
@@ -35,6 +35,21 @@ CT 316 arrived, after 29 days up; the only kernel WARNING on record is `__dev_ch
 from `lxc-device` at this CT's vmbr0→vmbr1 re-bridge. Suspected (unproven): in-CT Tailscale /
 netns churn. Moved off tower + Tailscale stripped to isolate it; tower stability watch in homeLab TODO.
 Tower-era config: `tower:/root/316.conf.pre-move-2026-09-23`.
+
+**Public copy (added 2026-09-27) — `/srv/sermons-public` → https://cornerstone.jadedviber.com.** Same pages
+with the ESV text removed (every reference stays; each becomes a "Read … on esv.org" link, pages carry
+`noindex` while the church is phone-testing). Built on the Pocket by `scripts/bin/sermon-public.py` inside
+`sermon-nightly.sh` (`SERMON_PUBLIC`; the build refuses to publish if any verse text survives) and rsynced
+`--delete` for html/json. Served by a second nginx block (`sites-available/sermons-public`: `server_name
+cornerstone.jadedviber.com`, no autoindex, `*.srt/*.txt/*.env/*.mp3` → 404, same LAN-only allow) — the
+public site never needs the mp3 because the pages play from YouTube. Reach = **Cloudflare Tunnel on
+[[pi-gw1]]** (`cloudflared` service → origin `http://192.168.68.116:80`, original Host header passed
+through, so nginx picks this block); no router port is opened and the house IP stays hidden. Only the
+hostname routed in the tunnel is public — `sermons.` stays tailnet-only by construction. The
+`cornerstone.jadedviber.com` name was pi-gw2's Kuma status URL (piGate `networks/cbw.md`) until 2026-09-27;
+repurposed for this. Hand-off later = rsync `/srv/sermons-public` to the church's host.
+Verify: `curl -s -o /dev/null -w '%{http_code}\n' https://cornerstone.jadedviber.com/` → `200` from off-tailnet;
+`curl -s https://cornerstone.jadedviber.com/<slug>.html | grep -c 'class="vn"'` → `0`.
 
 **Verify:** `ssh sermons 'du -sh /srv/sermons; ls /srv/sermons/*/audio.mp3 | wc -l'` ·
 `curl -sI -r 0-1023 https://sermons.jadedviber.com/<slug>/audio.mp3` → `206`, `server: nginx`, `via: 1.1 Caddy`.
