@@ -23,7 +23,7 @@ pi-gw1 is only the gate (no sermon files written to its SD card); the CT has **n
 | | |
 |---|---|
 | Data | `/srv/sermons` inside the CT rootfs (host path `/rpool/data/subvol-316-disk-0/srv/sermons`, owner uid 101000 = CT `sermons`). ~660 MB / 32 sermons at move time, ~20 MB each; grow rootfs with `pct resize 316 rootfs +NG`. |
-| nginx | `:80`, autoindex, `allow 192.168.68.0/22; deny all` (so localhost gets 403 — expected), byte-range on `*.mp3` for seeking. |
+| nginx | `:80`, autoindex, `allow 192.168.68.0/22; deny all` (so localhost gets 403 — expected), byte-range on `*.mp3` for seeking. **Both blocks send `Cache-Control: no-cache` at server level (2026-09-28)** so pages revalidate on every load — without it a phone kept a day-old page by heuristic (Last-Modified) caching after a republish; mp3/png locations keep their own 1-day cache. |
 | Front door | pi-gw1 `/etc/caddy/Caddyfile` `sermons.jadedviber.com` block → `reverse_proxy`. Pre-move copy of the Caddyfile: `Caddyfile.bak-2026-09-23`; pi-gw1 `/srv/sermons` = retired pre-move pages, safe to delete. |
 | SSH | `ssh sermons` → `HostName 192.168.68.116`, `ProxyJump book5` (book5's Tailscale), `HostKeyAlias sermons`. Works home or away. |
 | Writer | ONLY `scripts/bin/sermon-nightly.sh`: pages (`SERMON_HOST`) and archive (`SERMON_ARCHIVE`) both = `sermons:/srv/sermons`. sha256 read-back before a local mp3 is removed; never `--delete`. |
