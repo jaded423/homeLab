@@ -319,11 +319,23 @@ docker-compose up -d
 - `~/.claude/docs/homelab/setup-guides.md` (deep doc — folded into Setup recipes)
 - `~/projects/homeLab/CLAUDE.md` lines 45–119 (Operational Current State, authoritative — retirements, current IPs, watchdog/GPU/DNS ownership)
 
-## tmux detach storm (2026-06-12, unsolved)
+## tmux detach storm (cause found + fixed 2026-09-30)
 
-point4 client detached every couple seconds for several minutes, then stopped on its own. **Ruled out:** the Claude session inside point4 (zero tmux refs in transcript), tmux-resurrect backup agent, cron, Music/Hammerspoon relaunch loop, rogue tmux processes (live sampler clean). Not the 2026-02-27 background-process incident pattern.
+**Cause:** the zsh `exit` override (`zshConfig/functions/tmux.zsh`, born 2026-02-17: inside tmux, `exit` = `tmux detach` and does not exit). Claude Code's shell snapshot (`~/.claude/shell-snapshots/*.sh`) copies that function into every Bash tool command, so a Claude running inside tmux that executes a scripted `exit` detaches Joshua's client instead of ending the command. A watcher loop of the shape `for …; do check && { echo done; exit 0; }; sleep 10; done` therefore never ends once the check passes — it detaches the client on every pass until the loop count or the background time limit runs out. No tmux command appears anywhere in the transcript, which is why the earlier hunts came up empty.
 
-**If it recurs:** check `/tmp/tmux-detach.log` for timestamps (the detach-logger hooks are left armed but die with a tmux server restart — re-arm below); check Ghostty tab health (a client SIGHUP looks identical to a detach from inside tmux); note what each Claude window was doing.
+**Proof (2026-09-30, tmux `3`, session `267c103c`):** a background watcher waiting on an ssh check printed `COPY LANDED` every ~11 s from 09:26:25 to 09:32:06 (32 passes, never exited); the first three detaches were silent (three boots), every later pass is followed by tmux's `no current client`. It stopped when the harness killed the watcher at its time limit.
+
+**Fix:** the override now acts only in interactive shells — `if [[ -o interactive && -n "$TMUX" ]]`. Typing `exit` in a pane still detaches; a scripted `exit N` exits with N. A Claude session picks the fix up at its next start (the snapshot is taken at launch); one started before 2026-09-30 still carries the old function.
+
+**Earlier incidents** (2026-02-27, 2026-06-12 below, 2026-07-08) fit the same mechanism but were not re-verified against their transcripts.
+
+**If it ever recurs anyway:** look in the running Claude session's task output dir (`/tmp/claude-1000/<cwd-slug>/<session-id>/tasks/*.output`) for a repeating line followed by `no current client`; `whence -v exit` inside a Bash tool call shows whether the old function is still loaded. The detach logger below is the fallback when no Claude is involved.
+
+### The 2026-06-12 report (kept for the record)
+
+point4 client detached every couple seconds for several minutes, then stopped on its own. **Ruled out at the time:** the Claude session inside point4 (zero tmux refs in transcript), tmux-resurrect backup agent, cron, Music/Hammerspoon relaunch loop, rogue tmux processes (live sampler clean).
+
+Check `/tmp/tmux-detach.log` for timestamps (the detach-logger hooks die with a tmux server restart — re-arm below); check Ghostty tab health (a client SIGHUP looks identical to a detach from inside tmux); note what each Claude window was doing.
 
 ```bash
 # Re-arm tmux detach logger (after any tmux server restart)
@@ -331,4 +343,4 @@ tmux set-hook -g client-detached 'run-shell "echo \"$(date +%H:%M:%S) detached: 
 tmux set-hook -g client-attached 'run-shell "echo \"$(date +%H:%M:%S) attached: #{hook_client}\" >> /tmp/tmux-detach.log"'
 ```
 
-Tracked as an open item in `~/projects/homeLab/TODO.md`. (Migrated out of global `~/.claude/CLAUDE.md` 2026-07-07 by `/sum` one-home audit.)
+(Migrated out of global `~/.claude/CLAUDE.md` 2026-07-07 by `/sum` one-home audit; TODO item closed 2026-09-30.)

@@ -1,5 +1,15 @@
 # HomeLab Project Changelog
 
+## 2026-09-30 — tmux detach storm: cause found and fixed
+
+**What changed:**
+- The zsh `exit` override in `zshConfig/functions/tmux.zsh` now acts only in interactive shells (`[[ -o interactive && -n "$TMUX" ]]`). Typing `exit` in a tmux pane still detaches; a scripted `exit N` really exits.
+- Wiki `troubleshooting` § tmux detach storm rewritten (cause, proof, fix, how to recognise it); TODO item closed.
+
+**Why:**
+- Claude Code's shell snapshot copies the override into every Bash tool command. Inside tmux, a background watcher loop that reached `exit 0` ran `tmux detach` instead and kept looping — one detach per pass. On 2026-09-30 that was 32 passes over six minutes in tmux `3`, visible in the watcher's own output file as a repeating line followed by `no current client`.
+- The override dates from 2026-02-17; the first recorded storm was ten days later (2026-02-27), then 2026-06-12, 2026-07-08 and 2026-09-30. The earlier three fit the mechanism but were not re-verified.
+
 ## 2026-09-30 — VM101: 1Password CLI lab (`~/op-lab/`), headless service-account path proven
 
 **What changed:**
