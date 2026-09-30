@@ -201,6 +201,22 @@ book5 receiver, and pstore forensics → [[watchdogs]].
 - **2026-07-19 hang:** froze 15:26 after 16 d uptime on the pinned kernel; pstore empty again,
   journal stopped mid-stream, found ~3.5 h later via blank Frigate. The pin **reduced** frequency
   (1–3 d → 16 d) but did not eliminate it — root cause remains invisible / hardware-level.
+- **Hang log on the pinned kernel:** 07-19 (16 d) · 08-12 · 08-13 · 08-24 (11 d) · 09-22 16:36 (29 d)
+  · 09-23 00:35 (8 h) · 09-29 20:31 (6.8 d). Every one identical: journal + rsyslog forward stop
+  mid-stream, pstore empty, no lockup/hung_task panic, no AER/Xid/thermal/OOM beforehand. The CT 316
+  theory died 09-29 (hang with the CT long gone). Six months / two kernels / five software tripwires /
+  zero notes ⇒ the CPU stops executing — hardware/platform, not software. **Stop adding note-takers.**
+- **C-state cap (2026-09-29 23:35):** `intel_idle.max_cstate=1` added to `GRUB_CMDLINE_LINUX_DEFAULT`
+  (`/etc/default/grub`, backup `grub.bak-2026-09-29`, `update-grub`). Only POLL + C1 remain — the
+  Xeon E5-2683 v4 was idling into C6 (core power-off), the classic no-note freeze on Broadwell-EP
+  workstations. Costs ~10–20 W idle. **4 weeks clean (→ 2026-10-27) = fixed.** Next single variables
+  if it hangs again: memtest86+ (in the grub menu, needs console) → replace the 2×8 GB Hynix DIMMs
+  with two more Micron 32 GB (mixed ranks across 4 channels; part numbers in TODO) → pull the M4000
+  passthrough. `pcie_aspm=off` was already on the line (ASPM ruled out).
+- **Flight recorder fixed 2026-09-29:** it had streamed NOTHING since 07-29 — started before book5
+  was routable, the ssh leg died once, and systemd's default `IgnoreSIGPIPE=yes` let the sampler loop
+  into a dead pipe. Now `/usr/local/bin/tower-flightrec-stream.sh` reconnects forever and the unit
+  sets `IgnoreSIGPIPE=no`. Health check = the file's mtime on book5, never its existence.
 
 ⚠️ **Do NOT try netconsole on tower** — netpoll on the bridge silently fails on this
 hardware/kernel combo (kernel says "network logging started" but no packets hit the wire,

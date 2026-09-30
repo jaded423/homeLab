@@ -1,5 +1,27 @@
 # HomeLab Project Changelog
 
+## 2026-09-29 — Tower hang #7 on the pinned kernel: C-state cap + flight recorder resurrected
+
+**What changed:**
+- **Tower hung 20:31:57** (6.8 d uptime, CT 316 long gone → that theory is dead). book5's Tapo plug-cycle fired 20:46, back 20:47:56 — the auto-recovery half of the stack works. Same signature as every hang since March: journal + rsyslog forward stop mid-stream, pstore empty, none of softlockup/hardlockup/hung_task fired, no AER/Xid/thermal/OOM before it.
+- **C-state cap live 23:35:** `intel_idle.max_cstate=1` on `GRUB_CMDLINE_LINUX_DEFAULT` (backup `/etc/default/grub.bak-2026-09-29`), clean VM shutdown + reboot; only POLL + C1 idle states remain. The Xeon was idling into C6 (core power-off) — the classic no-note freeze on Broadwell-EP workstations.
+- **Flight recorder had been dead since 07-29** (nine days after it was built): started before book5 was routable, ssh leg died once, sampler looped into a dead pipe under systemd's `IgnoreSIGPIPE=yes`, `active (running)` the whole time. Replaced with `/usr/local/bin/tower-flightrec-stream.sh` (reconnect loop) + `IgnoreSIGPIPE=no`; verified streaming, reconnected once at boot as designed. TODO verify line changed from `test -s` (existence) to mtime.
+- **Wiki:** `tower` § Crash instrumentation gets the full hang log on the pinned kernel, the verdict (six months / two kernels / five tripwires / zero notes ⇒ hardware, stop adding note-takers), the C-state cap, and the next-variable ladder; `watchdogs` flight-recorder line updated.
+- **TODO:** stability-watch item re-verified against 2026-10-27 (4 weeks beats the 29-day record); new item for replacing the 2×8 GB Hynix DIMMs with two more Micron 32 GB (part numbers recorded; memtest86+ first — it's in the grub menu, needs a console).
+
+**Why:**
+- Software forensics are exhausted: every channel shows "normal, then nothing", which means the CPU stopped executing. That is a hardware/platform freeze; C6 is the cheapest single variable that matches the signature exactly, and it had never been tested.
+
+**Files modified:**
+- tower: `/etc/default/grub`, `/boot/grub/grub.cfg`, `/etc/systemd/system/tower-flightrec.service` (backup `.bak-2026-09-29`), `/usr/local/bin/tower-flightrec-stream.sh`
+- `TODO.md`, `wiki/components/tower.md`, `wiki/concepts/watchdogs.md`
+
+**Technical notes:**
+- `pcie_aspm=off` was already on the boot line — ASPM ruled out. RAM is 2×32 GB Micron 2Rx4 + 2×8 GB Hynix 1Rx8, all DDR4-2400 ECC RDIMM, BIOS 12/2021.
+- A `verify:` line that passes on file existence is the absence-is-not-consent bug — it let the recorder sit dead for two months while its TODO read `[x]`.
+
+---
+
 ## 2026-09-23 — Flint 3 becomes the house router; pihole's 7" screen shows PADD; Pi-hole 6.4.3
 
 **What changed:**
