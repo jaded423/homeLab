@@ -1,5 +1,27 @@
 # HomeLab Project Changelog
 
+## 2026-09-30 — VM101: 1Password CLI lab (`~/op-lab/`), headless service-account path proven
+
+**What changed:**
+- `op` 2.39.0 installed on VM101 in the user bin (`~/.local/bin/op`, official zip, no sudo).
+- NEW `~/op-lab/` on VM101: `check.sh` (dummy job, PASS iff env `LAB_PASSWORD` is the dummy value, prints lengths only) · `.env` (a vault reference `op://Lab/op-lab dummy/password`, not a value) · `run.sh` (loads the service-account token, then `op run --env-file=.env -- ./check.sh`) · `README.md`.
+- Service-account token lives at `~/.config/op/sa.token` (600), filled by Joshua in vim. `~/.config/op` set to 700 — `op` refuses to run while that dir is any broader.
+- 1Password side (Joshua): vault `Lab`, item `op-lab dummy`, service account scoped read-only to `Lab`.
+- Result: positive run PASSED headless (no GUI, no desktop app); wrong-value, unset and missing-token controls fail as designed; `op run` rewrites the value to `<concealed by 1Password>` in the child's stdout; `op whoami` reports `SERVICE_ACCOUNT`.
+- Wiki: `vm101-ubuntu` gets a § 1Password lab; TODO vault-injection item carries the result + next step.
+
+**Why:**
+- Joshua wanted to know whether vault injection could replace the secret-guard hook, without touching the Elevated VM (access ends 2026-09-30, keys already rotated to Cody). VM101 is the stand-in for any GUI-less host.
+- Finding: a headless host needs exactly one secret file (the token), scoped to one vault and revocable from the web UI. That let the global hook shrink to two rules the same night (global changelog, same date).
+
+**Files modified:**
+- `wiki/components/vm101-ubuntu.md` — new § 1Password lab
+- `wiki/log.md` — entry
+- `TODO.md` — vault-injection item: PROVEN note + `resume:` line
+- VM101: `~/op-lab/*`, `~/.local/bin/op`, `~/.config/op/` (mode + token file)
+
+---
+
 ## 2026-09-29 — Tower hang #7 on the pinned kernel: C-state cap + flight recorder resurrected
 
 **What changed:**

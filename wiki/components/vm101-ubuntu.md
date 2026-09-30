@@ -200,6 +200,16 @@ VM101 is the always-on box, so timed/automated mail from Joshua's own identity r
 - **Scheduling — `~/.local/bin/gmail-at "YYYY-MM-DD HH:MM" TO "SUBJECT" < body.txt`** (added 2026-09-17). Writes a **persistent** systemd user timer + service pair (`~/.config/systemd/user/mail-<stamp>-<slug>.{timer,service}`) plus a runner + body under `~/.local/share/mail-at/`. `Persistent=true` → if the VM was down at fire time it sends on next boot instead of dropping silently; `loginctl enable-linger jaded` is ON (2026-09-17) so nothing needs a login. Units **self-remove after a good send**; a failed send leaves them in place so `gmail-at --list` / `journalctl --user -u 'mail-*'` shows it. `gmail-at --cancel NAME` drops one. First real job: the Point4 reminder to joshua@elevatedtrading.com, 2026-09-17 09:45. **This is what "schedule an email for 9am" means** — arm it here from j@; a Gmail draft is not a scheduled email. Recurring mail: hand-write a `*.timer` pair, or a crontab line piping into `gmail-send`.
 - **Why not a personal Gmail token here:** consumer accounts sit on an External-Testing OAuth app → refresh tokens die every 7 days → a scheduler here would stop silently. Detail: brain `jadedviber-workspace-org`, `gsuite-home-instance`.
 
+## 1Password lab — `~/op-lab/` (2026-09-30, throwaway)
+
+Test bed for "can a GUI-less host run a job whose secret lives in 1Password?" — answer: yes.
+
+- **CLI:** `~/.local/bin/op` 2.39.0 (user bin, no sudo; not on the non-interactive PATH, so scripts call it by full path).
+- **Auth:** a 1Password **service account** scoped read-only to the `Lab` vault. Its token sits in `~/.config/op/sa.token` (600); `run.sh` exports it as `OP_SERVICE_ACCOUNT_TOKEN` for the one command. `~/.config/op` must be **700** or `op` refuses to start.
+- **Flow:** `.env` holds a reference (`op://Lab/op-lab dummy/password`) → `op run --env-file=.env -- ./check.sh` resolves it at launch → the job sees the value in its env; nothing lands on disk, and `op run` conceals the value in the child's output.
+- **Run:** `ssh ubuntu '~/op-lab/run.sh'` → `PASS: correct password received (len 5)`.
+- **Teardown:** `rm -rf ~/op-lab ~/.config/op/sa.token` + delete the service account and the `Lab` vault in 1Password.
+
 ## Troubleshooting
 
 ```bash
