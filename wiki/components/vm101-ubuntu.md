@@ -20,10 +20,10 @@ lockdown ON) → see [[mullvad]]. Sibling VM on the same host = [[vm111-homeassi
 |----------|-------|
 | VMID | 101 (on [[tower]], rpool) |
 | Hostname | ubuntu-server |
-| OS | Ubuntu Server 22.04 LTS |
+| OS | Ubuntu Server 24.04.4 LTS (verified 2026-09-30; 26.04 not offered to it yet, and not wanted — the NVIDIA 535 passthrough stack is the risk) |
 | User | `jaded` (passwordless sudo, in `docker` group) |
 | RAM / vCPU | 48 GB / 28 cores |
-| Disk | 100 GB (tower rpool) |
+| Disk | 292 GB root (tower rpool); 84 GB free on 2026-09-30 |
 | NIC | `enp6s18`, IP **192.168.68.101**, gw `.1` — on tower's **2.5G `vmbr1`** since 2026-06-19 |
 | GPU | NVIDIA Quadro M4000 (8 GB, vfio passthrough from tower) → [[gpu-passthrough]] |
 | Access | `ssh ubuntu` → **ProxyJump tower** (Mullvad walls off the tailnet) → [[access-model]] |
@@ -75,6 +75,9 @@ This page owns the full VM101 service list. Ports, purpose, and compose location
 | **whisper** | on-demand | docker | `~/docker/whisper` | `local/faster-whisper` CPU transcription (`docker compose run` profile `manual`; distil-large-v3 int8 24-thread ≈ 4.1× realtime; GPU walled by Maxwell → CPU-only). Feeds the Mac `trans -sermon` tool |
 | **Odoo** | 8069 | docker | `~/docker/odoo/` | Business ERP — **test/staging** instance (Odoo 17, matches work). `odoo-db` PostgreSQL 15 |
 | **Odoo (personal/finance)** | 8070 | docker | `~/docker/odoo-personal/` | **Personal expense tracking** — Odoo 19 Community + OCA (`account_financial_report`, `web_responsive`), `odoo-db-personal` PostgreSQL 16. Fully isolated from the 8069 test stack (own network/DB, no shared data). Owned by the [finance project](~/projects/personal/finance/CLAUDE.md); secrets in the box `~/docker/odoo-personal/.env` (gitignored) |
+| **Nextcloud** (sandbox) | 8085 | docker | `~/docker/nextcloud/` | **Tinker instance, no real data** (2026-09-30) — `nextcloud:apache` + `nextcloud-db` PostgreSQL 16 + `nextcloud-redis`; data in `./html` + `./db` beside the compose. Plain HTTP on the LAN IP (`trusted_domains` = `192.168.68.101`). Admin account is made in the browser on first visit. Part of the de-Google exploration |
+| **Grist** (sandbox) | 8484 | docker | `~/docker/grist/` | **Tinker instance** (2026-09-30) — `gristlabs/grist`, gVisor formula sandbox, data in `./persist`. No login configured: anyone on the LAN is `j@jadedviber.com` |
+| **Immich** (sandbox) | 2283 | docker | `~/docker/immich/` | **Tinker instance** (2026-09-30) — the project's own `docker-compose.yml` + `.env` (server, machine-learning on CPU, valkey, postgres). Library in `./library`, DB in `./postgres` on the root disk — fine for test photos; the real library waits for the 10 TB pool and its own dataset |
 | **Gitea** | 3001 (web), 2223 (ssh) | docker | `~/docker/gitea/` | Self-hosted git mirror; the weekly `push-all` skill pushes here (16 repos) alongside GitHub + Pi1 |
 | **ClamAV** | — | docker | `~/docker/` | Antivirus scanning |
 | **Portainer** | 9000 | `docker run` | — | Docker management UI |
@@ -219,6 +222,8 @@ ls /mnt/media-pool/ && sudo mount -a && cat /etc/fstab | grep media-pool
 nvidia-smi
 # Container won't start
 docker logs <container>; df -h; docker compose up -d --force-recreate <container>
+# No internet although Mullvad says Connected → routing rules wiped → [[mullvad]] § Gotcha
+ip rule | grep -c 1836018789 || mullvad reconnect -w
 ```
 
 Also: `yt-dlp` at `~/.local/bin/yt-dlp`. Do **NOT** add VM101 to the router's VPN Client List (Deco-era note; same rule on the Archer) —

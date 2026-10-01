@@ -55,6 +55,28 @@ Everything on VM101 that routes through Mullvad follows the active exit:
 - **qBittorrent** (and other downloads) — follow whichever mode is set
 - **Game-stream / Steam login** — the reason multihop Dallas exists (Sweden-IP block)
 
+## Gotcha: "Connected" but no internet (routing rules wiped)
+
+**Symptom:** `mullvad status` says Connected and the WireGuard handshake is fresh, but every
+outbound connection is refused in milliseconds (`curl: (7)`, `ping: sendmsg: Operation not
+permitted`, `docker pull … connection refused`). LAN and ssh still work.
+
+**Cause:** Mullvad steers traffic into the tunnel with policy-routing rules (`ip rule` →
+table `1836018789`). `systemd-networkd` deletes rules it did not create whenever it
+restarts, and unattended-upgrades restarts it after library updates (seen 2026-09-30 06:04,
+libssl3). With the rules gone, traffic takes the LAN default route and the kill switch
+refuses it. Nothing leaks; the box is simply offline until someone notices (13 h that day).
+
+```bash
+ip rule | grep -c 1836018789     # 0 = rules wiped (healthy = 1 or more)
+mullvad reconnect -w             # puts them back; no sudo
+curl -s https://am.i.mullvad.net/connected
+```
+
+**Permanent fix (NOT applied yet — homeLab TODO):** a drop-in
+`/etc/systemd/networkd.conf.d/10-mullvad.conf` with `[Network]` +
+`ManageForeignRoutingPolicyRules=no`, then restart networkd and `mullvad reconnect`.
+
 ## Sources
 
 - `~/projects/homeLab/CLAUDE.md` — "Operational Current State" (2026-06-18+), "VM 101 Mullvad exit — HOP-SWAPPABLE" block

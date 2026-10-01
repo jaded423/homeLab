@@ -1,5 +1,18 @@
 # HomeLab Project Changelog
 
+## 2026-09-30 — VM101: Nextcloud, Grist and Immich sandboxes; Mullvad routing-rule outage found
+
+**What changed:**
+- Three tinker stacks on VM101 under `~/docker/`: Nextcloud (`:8085`, with PostgreSQL 16 + redis), Grist (`:8484`), Immich (`:2283`, the project's own compose, v3.2.4). Per-stack secrets were generated on the box into 600 `.env` files and never printed. All three answer 200 from the Pocket over the LAN.
+- `mullvad reconnect -w` run on VM101 to restore its policy-routing rules.
+- Wiki: `vm101-ubuntu` service inventory + at-a-glance, `mullvad` § Gotcha.
+
+**Why:**
+- De-Google exploration: Joshua wants to see the shape of the self-hosted alternatives before committing to anything. No real data goes in yet; Immich's real library waits for the 10 TB pool.
+- The image pulls failed because VM101 had had no internet since 06:04 that morning. Unattended-upgrades (libssl3) restarted `systemd-networkd`, which deleted Mullvad's `ip rule`s; the tunnel stayed "Connected" while the kill switch refused everything. Nothing leaked.
+
+**Left open (homeLab TODO):** the permanent networkd drop-in, and the 79 pending package updates (Docker, NVIDIA 535, Mullvad) which need a planned VM101 reboot.
+
 ## 2026-09-30 — tmux detach storm: cause found and fixed
 
 **What changed:**
