@@ -11,7 +11,9 @@
 - De-Google exploration: Joshua wants to see the shape of the self-hosted alternatives before committing to anything. No real data goes in yet; Immich's real library waits for the 10 TB pool.
 - The image pulls failed because VM101 had had no internet since 06:04 that morning. Unattended-upgrades (libssl3) restarted `systemd-networkd`, which deleted Mullvad's `ip rule`s; the tunnel stayed "Connected" while the kill switch refused everything. Nothing leaked.
 
-**Left open (homeLab TODO):** the permanent networkd drop-in, and the 79 pending package updates (Docker, NVIDIA 535, Mullvad) which need a planned VM101 reboot.
+**Same evening:** the networkd drop-in (`/etc/systemd/networkd.conf.d/10-mullvad.conf`, `ManageForeignRoutingPolicyRules=no`) went in and held across a networkd restart and a reboot. 72 package updates applied (Docker 29.8.2, Mullvad 2026.5, kernel 6.8.0-146), VM101 rebooted, 25/25 containers back, GPU, Mullvad and NFS verified. 22 NVIDIA/mesa packages are held by phased rollout.
+
+**Left open (homeLab TODO):** whether to take the 26.04.1 release upgrade.
 
 ## 2026-09-30 — tmux detach storm: cause found and fixed
 

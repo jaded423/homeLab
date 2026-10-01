@@ -73,9 +73,9 @@ mullvad reconnect -w             # puts them back; no sudo
 curl -s https://am.i.mullvad.net/connected
 ```
 
-**Permanent fix (NOT applied yet — homeLab TODO):** a drop-in
+**Permanent fix (applied 2026-09-30; rules verified surviving a networkd restart and a reboot):** a drop-in
 `/etc/systemd/networkd.conf.d/10-mullvad.conf` with `[Network]` +
-`ManageForeignRoutingPolicyRules=no`, then restart networkd and `mullvad reconnect`.
+`ManageForeignRoutingPolicyRules=no`.
 
 ## Sources
 

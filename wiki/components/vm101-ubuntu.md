@@ -20,7 +20,7 @@ lockdown ON) → see [[mullvad]]. Sibling VM on the same host = [[vm111-homeassi
 |----------|-------|
 | VMID | 101 (on [[tower]], rpool) |
 | Hostname | ubuntu-server |
-| OS | Ubuntu Server 24.04.4 LTS (verified 2026-09-30; 26.04 not offered to it yet, and not wanted — the NVIDIA 535 passthrough stack is the risk) |
+| OS | Ubuntu Server 24.04.4 LTS (verified 2026-09-30, kernel 6.8.0-146; 26.04.1 is offered but not taken — the NVIDIA 535 passthrough stack is the risk, see TODO) |
 | User | `jaded` (passwordless sudo, in `docker` group) |
 | RAM / vCPU | 48 GB / 28 cores |
 | Disk | 292 GB root (tower rpool); 84 GB free on 2026-09-30 |
