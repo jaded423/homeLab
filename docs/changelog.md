@@ -1,5 +1,22 @@
 # HomeLab Project Changelog
 
+## 2026-10-01 — Grist sandbox: stable image, first-run setup, API access through 1Password
+
+**What changed:**
+- Grist moved from the `latest` image tag to `stable` (1.7.20). `latest` is the nightly build and showed an "outdated" banner on a fresh install.
+- First-run wizard completed by Joshua: boot key, "No authentication", no external backups, telemetry off. First test document ("Test": Orders + Customers with a reference column).
+- API access from the Pocket: `grist-api <path>` (`scripts/bin`), key stored in 1Password at `op://Lab/Grist sandbox/credential` and fetched per call by `op run`. Reads verified (profile, orgs, tables, records).
+- TODO: build a Claude-designed document through the API; 1Password service account for unattended jobs; Ubuntu 26.04 decision (driver gate checked: 535 gone, 580 present).
+
+**Why:**
+- First real consumer of 1Password after the `~/op-lab/` proof. Finding: the desktop-app path asks for approval once per launched command (3 commands, 3 prompts), so unattended jobs need a service account.
+- In "No authentication" mode the browser acts as the admin, but the API without a key is anonymous and sees nothing.
+
+**Files modified:**
+- VM101 `~/docker/grist/docker-compose.yml` — image tag
+- `wiki/components/vm101-ubuntu.md` — Grist row
+- `TODO.md` — three items
+
 ## 2026-09-30 — VM101: Nextcloud, Grist and Immich sandboxes; Mullvad routing-rule outage found
 
 **What changed:**

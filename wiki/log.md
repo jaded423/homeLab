@@ -7,6 +7,8 @@ related: [index]
 
 # homeLab wiki — log
 
+- **2026-10-01** — [[vm101-ubuntu]] § Service inventory, Grist row: image is `gristlabs/grist:stable` (`latest` = nightly), "No authentication" mode, API reached from the Pocket with `grist-api` and a key held in 1Password (`op://Lab/Grist sandbox/credential`).
+
 - **2026-09-30** — [[vm101-ubuntu]] § Service inventory: three **sandbox** stacks added — Nextcloud `:8085`, Grist `:8484`, Immich `:2283` (`~/docker/{nextcloud,grist,immich}/`, test data only). At-a-glance corrected (24.04.4, 292 GB root). [[mullvad]] gains § Gotcha: "Connected" but no internet — networkd restarts (unattended-upgrades) wipe Mullvad's `ip rule`s; `mullvad reconnect -w` restores them, permanent drop-in still pending.
 
 - **2026-09-30** — [[troubleshooting]] § tmux detach storm: **cause found + fixed.** The zsh `exit` override (= `tmux detach` inside tmux) rides Claude Code's shell snapshot into every Bash tool command, so a background watcher's `exit 0` detached the client on every loop pass instead of ending the loop. Override is now interactive-only (`zshConfig/functions/tmux.zsh`). Section rewritten from "unsolved" to cause / proof / fix / how to recognise it.
