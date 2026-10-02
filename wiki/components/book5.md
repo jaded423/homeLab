@@ -96,7 +96,6 @@ Network scanner, native install on book5 / vmbr1, scans `192.168.68.0/22`.
 | Cockpit | Native | 9090 | Web management (SSH-independent) |
 | Twingate Client | systemd | — | VPN tunnel (auth.sock) |
 | Twingate Connector | systemd | — | jaded423 network access |
-| dnsproxy-doh | systemd | 443, 853 | DoH/DoT proxy → Pi-hole |
 | Reverse Tunnels | Listener | 2246-2250 | Mac, Phone, S9, S10+ device access |
 | net-health-monitor | systemd timer | — | Watchdog (see [[watchdogs]]) |
 | cpu-watchdog | script | — | Suspends first VM if CPU pinned (see [[watchdogs]]) |
@@ -104,31 +103,13 @@ Network scanner, native install on book5 / vmbr1, scans `192.168.68.0/22`.
 > NOTE: **Samba (smbd) was RETIRED 2026-05-27** (was unused; `/root` share was a
 > security smell). The deep doc's Samba-shares section is obsolete — ignore it.
 
-### DNS proxy (dnsproxy-doh)
+### DNS proxy (dnsproxy-doh) — REMOVED 2026-10-02
 
-DNS-over-TLS/HTTPS proxy so the phone can use Android Private DNS via Twingate; forwards
-to Pi-hole ([[pihole]]). Full ad-blocking / DNS story → [[dns-adblocking]].
-
-| Property | Value |
-|----------|-------|
-| Binary | `/usr/local/bin/dnsproxy` (v0.78.2, AdGuard) |
-| Service | `dnsproxy-doh.service` |
-| DoH / DoT | 443 / 853 |
-| Upstream | Pi-hole `192.168.68.248:53` |
-| Domain | `dns.jadedviber.com` (Let's Encrypt, DNS-01, certbot auto-renew) |
-| Cert | `/etc/letsencrypt/live/dns.jadedviber.com/fullchain.pem` |
-
-**Traffic flow:** Phone (cellular) → Android Private DNS (DoT) → `dns.jadedviber.com:853`
-→ Twingate tunnel → book5 dnsproxy → Pi-hole `192.168.68.248:53` → ads blocked.
-
-**Note:** Plain DNS port 53 is NOT bound (avoids conflict with Twingate connector). Do
-NOT enable Twingate "Secure DNS" / Custom DoH — causes a circular dependency.
-
-```bash
-systemctl status dnsproxy-doh
-journalctl -u dnsproxy-doh -f
-openssl x509 -enddate -noout -in /etc/letsencrypt/live/dns.jadedviber.com/fullchain.pem
-```
+The DoH/DoT proxy for the phone's Android Private DNS (`dns.jadedviber.com` → Twingate → book5 →
+[[pihole]]) is gone: the hostname had no DNS record left, the cert expired 2026-05-13 (its renewal
+hook lived in `/tmp`), and nothing was connected. Unit, binary, certbot timer and the cert lineage
+were removed; the unit + renewal conf are kept in `~/projects/graveyard/book5-doh-2026-10/`.
+Nothing replaced it — see [[dns-adblocking]] for what off-LAN DNS does today.
 
 ### Twingate (client + connector) + sdwan0 DNS pin
 

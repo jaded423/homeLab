@@ -37,7 +37,12 @@ GL.iNet Flint 3 since 2026-09-23 (history → [[network-topology]]); any "Deco a
 ## Tailscale MagicDNS forwarding
 
 Tailscale MagicDNS (`100.100.100.100`) is **transparent** — it forwards to the DHCP-assigned
-DNS, which is pihole. So devices on the tailnet still get ad-blocking without extra config.
+DNS, which is pihole. So devices on the tailnet still get ad-blocking without extra config —
+**at home only.** Verified 2026-10-02: the tailnet has no global nameserver (only the `.lab`
+split route below), so off-LAN a device uses whatever DNS its network hands it. The old
+off-LAN answer (Android Private DNS → `dns.jadedviber.com` → [[book5]] dnsproxy) was removed
+that day, dead since 2026-05. If off-LAN ad-blocking is wanted again: set pihole's tailnet IP as
+the tailnet's global nameserver with "override local DNS".
 
 ## `.lab` names — Pi-hole Local DNS Records (since 2026-09-18)
 

@@ -189,8 +189,8 @@ Docker management UI — http://192.168.68.248:9000 (port 9000).
 Clients get pointed at `.248` via **the Flint 3's DHCP option 6** (no secondary,
 blank, IPv6 off). Tailscale MagicDNS (`100.100.100.100`) transparently forwards to the
 DHCP DNS (= pihole). [[book5]]'s `sdwan0` NM connection is pinned to `.248` (auto-remediated).
-Phone-away ad-block rides Android Private DNS (DoT) → `dns.jadedviber.com:853` → Twingate
-→ book5 dnsproxy → pihole. **All of this lives on [[dns-adblocking]] — don't duplicate here.**
+The phone-away DoT path via book5 was removed 2026-10-02. **All of this lives on
+[[dns-adblocking]] — don't duplicate here.**
 
 ## Quick commands
 

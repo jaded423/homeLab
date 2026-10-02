@@ -150,16 +150,12 @@ Add a port on the same server: append `-L <local>:localhost:<remote>` to that se
 chain in `.zshrc`. Local ports must be unique across all tunnels; remote ports may repeat on
 different servers.
 
-## Private DNS (Pi-hole ad-blocking, away from home)
+## Private DNS (Pi-hole ad-blocking, away from home) — RETIRED
 
-Off home WiFi, the phone routes DNS through Pi-hole for ad-blocking via Android **Private DNS
-(DoT)** → the tunnel: full detail → [[dns-adblocking]].
-
-- **Setup:** Settings → Network & Internet → Private DNS → `dns.jadedviber.com`.
-- Uses DoT on **port 853** (does NOT conflict with the VPN slot); traffic flows phone →
-  Android Private DNS → `dns.jadedviber.com:853` → tunnel → [[book5]] dnsproxy → Pi-hole
-  (`192.168.68.248:53`).
-- Do **NOT** enable a client "Secure DNS" / custom DoH — causes a circular dependency.
+The `dns.jadedviber.com` DoT path through [[book5]] was removed 2026-10-02 (dead since the cert
+expired 2026-05-13). Private DNS on the phone should be **Automatic**; a leftover
+`dns.jadedviber.com` entry would break DNS off Wi-Fi. There is no off-LAN ad-blocking today →
+[[dns-adblocking]].
 
 ## Troubleshooting
 

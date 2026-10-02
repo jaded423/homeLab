@@ -140,6 +140,16 @@ Frigate's nginx (5000) can serve the page shell while the backend (5001) is wedg
 HA notification when it fires). If it fires often, root-cause the `plate_recognizer` →
 `/api/events/.../clip.mp4` export stall. Self-healing detail → [[watchdogs]].
 
+**Detector = OpenVINO on CPU, container pinned to 6 CPUs (`cpuset: "0-5"`, 2026-10-02).** OpenVINO
+sizes its thread pool to the CPUs it can see; with all 28 vCPUs visible it spun 28 threads at ~5.5
+cores for ~0.2 core of real work (SSDLite MobileNet, ~25 inferences/s). Pinned: detector ~1.2 cores,
+inference 7 → 10 ms, 0 skipped frames. **GPU detection is not possible on the M4000 with Frigate
+0.16+** (tested 0.17.1): the image's ONNX Runtime 1.22 / CUDA 12.5 has no kernels for Maxwell
+(`cudaErrorNoKernelImageForDevice`), and the TensorRT libraries are no longer shipped. The old
+"ran on GPU" era was the pre-0.16 TensorRT detector. The M4000 still does video decode. A GPU
+detector needs a newer card or a Coral/Hailo → [[gpu-passthrough]]. Config has a third camera,
+`tapo_doorbell` (`192.168.68.77`), which was unreachable on 2026-10-02.
+
 ```bash
 docker logs frigate -f
 cd ~/docker/frigate && docker compose restart frigate
