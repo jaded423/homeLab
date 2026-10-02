@@ -83,9 +83,8 @@ qBit is routed through the VM 101 Mullvad exit — see [[mullvad]] (used for dow
 Gone as of 2026-10-02 (verified): VM 101 has no `~/GoogleDrives/`, no `rclone-*` units, and the
 work account (`joshua@elevatedtrading.com`) ended 2026-09-30. The SSHFS re-mounts on both Proxmox
 nodes (`/mnt/elevated`, `/mnt/jaded`) still pointed at the pre-renumbering `192.168.2.126` and had
-failed on every boot; their `/etc/fstab` lines are commented out on [[tower]] and [[book5]]
-(backup `/etc/fstab.bak-2026-10-02`, empty mountpoint dirs left in place). Nothing was deleted —
-the Drives themselves were never stored here. Old layout + rclone settings: git history of this
+failed on every boot; their `/etc/fstab` lines and the empty mountpoint dirs are removed on
+[[tower]] and [[book5]]. No data was involved — the Drives themselves were never stored here. Old layout + rclone settings: git history of this
 page, and `~/.claude/docs/homelab/google-drive.md`.
 
 ## Sources

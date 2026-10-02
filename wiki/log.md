@@ -7,6 +7,7 @@ related: [index]
 
 # homeLab wiki — log
 
+- **2026-10-02** — [[book5]] unplanned reboot 10:35:28 (90 d uptime): journal stops 10:30:02, ssh accepted TCP but gave no banner, web UI dead, ping + corosync fine; back by itself ~5 min later, VM 100 + tower-watchdog + flightrec sink all resumed. The stall began the same minute a cleanup ran there (fstab edit, `rmdir` of two empty `/mnt` dirs, `daemon-reload`, `reset-failed`) — timing match, cause unproven, what reset the box unknown (pstore empty, NVMe SMART clean). Same day: the retired tower units + fstab lines were removed outright (copies in `graveyard/tower-dead-units-2026-10/`).
 - **2026-10-02** — [[tower]] § Retired units + [[storage]] § Google Drive: four always-failing tower units retired (`check-vm-bridge.timer`, `virtiofsd-frigate`, `/mnt/elevated` + `/mnt/jaded` SSHFS mounts; same two fstab lines on [[book5]]). Disabled / commented out, nothing deleted. Tower C-state cap check-in at 2 d 10 h: cap active (POLL + C1 only), EDAC 0, pstore empty, flight recorder streaming to book5.
 - **2026-10-01** — [[vm101-ubuntu]] § Service inventory, Grist row: image is `gristlabs/grist:stable` (`latest` = nightly), "No authentication" mode, API reached from the Pocket with `grist-api` and a key held in 1Password (`op://Lab/Grist sandbox/credential`).
 

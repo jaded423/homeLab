@@ -134,14 +134,14 @@ Full setup, Maxwell-EOL NVENC limits, and the book5 iGPU counterpart → [[gpu-p
 | Twingate connector | jaded423 network access |
 | `fix-docker-forward.service` | iptables FORWARD fix (below) |
 
-### Retired units (2026-10-02)
+### Removed units (2026-10-02)
 
-Disabled, files left on disk: `check-vm-bridge.timer` (+ `/usr/local/bin/check-vm-bridge.sh` —
-guarded `vmbr0` while VM 101 sits on `vmbr1`, and its NFS self-heal ssh'd to the old
-`192.168.2.126`; failed every minute from 2026-02-07 with nothing ever breaking) and
-`virtiofsd-frigate.service` (VM 101 reads Frigate media over NFS; no virtiofs device in its
-config). The two SSHFS Drive mounts are commented out of `/etc/fstab` → [[storage]].
-`systemctl --failed` on tower is now empty, so a failed unit means something.
+Deleted from tower: `check-vm-bridge.{service,timer}` + `/usr/local/bin/check-vm-bridge.sh`
+(guarded `vmbr0` while VM 101 sits on `vmbr1`, NFS self-heal ssh'd to the old `192.168.2.126`;
+failed every minute from 2026-02-07 with nothing ever breaking) and `virtiofsd-frigate.service`
+(VM 101 reads Frigate media over NFS). Copies: `~/projects/graveyard/tower-dead-units-2026-10/`.
+The two SSHFS Drive mounts are gone from `/etc/fstab` → [[storage]]. `systemctl --failed` on
+tower is empty, so a failed unit now means something.
 
 ### fix-docker-forward.service
 
