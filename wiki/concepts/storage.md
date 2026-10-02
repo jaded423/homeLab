@@ -78,46 +78,15 @@ Completion detection was broken: qBit torrent names ≠ download folder names, a
 
 qBit is routed through the VM 101 Mullvad exit — see [[mullvad]] (used for downloading games + movies Joshua owns physical copies of; follows the active exit hop).
 
-## Google Drive integration (rclone on VM 101)
+## Google Drive integration (rclone on VM 101) — RETIRED
 
-rclone FUSE mounts with VFS caching expose two Google accounts on VM 101. Best for documents/configs/backups; **not** for video editing or databases.
-
-```
-/home/jaded/GoogleDrives/
-├── elevated/   (joshua@elevatedtrading.com)  → MyDrive / SharedDrives / OtherComputers
-└── jaded/      (jaded423@gmail.com)          → MyDrive / SharedDrives / OtherComputers
-# Convenience symlinks
-/home/jaded/elevatedDrive → GoogleDrives/elevated
-/home/jaded/GoogleDrive   → GoogleDrives/jaded
-```
-
-| Account | rclone remote | Mount point | systemd (user) service |
-|---------|---------------|-------------|------------------------|
-| Personal (`jaded423@gmail.com`) | `gdrive` | `~/GoogleDrives/jaded/MyDrive/` | `rclone-gdrive.service` |
-| Work (`joshua@elevatedtrading.com`) | `elevated` | `~/GoogleDrives/elevated/MyDrive/` (holds Elevated Vault) | `rclone-elevated.service` |
-
-**VFS settings:** cache mode `writes`, max age 24h, read chunk 128MB, buffer 64MB. First access is slow (cloud fetch); cached files fast for 24h; writes cached and uploaded in the background.
-
-**Service management:**
-```bash
-systemctl --user status  rclone-elevated.service   # or rclone-gdrive.service
-systemctl --user restart rclone-elevated.service
-systemctl --user enable  rclone-elevated.service
-journalctl --user -u rclone-elevated.service -f
-```
-
-**rclone checks:** `rclone listremotes` · `rclone lsd gdrive:` / `rclone lsd elevated:` · `rclone about gdrive:` (space)
-
-### Proxmox node access (SSHFS)
-
-Both Proxmox nodes re-mount the Drives from VM 101 over SSHFS (`/etc/fstab`):
-```bash
-jaded@192.168.68.101:/home/jaded/GoogleDrives/elevated /mnt/elevated fuse.sshfs defaults,allow_other,_netdev,reconnect,IdentityFile=/root/.ssh/id_rsa 0 0
-jaded@192.168.68.101:/home/jaded/GoogleDrives/jaded    /mnt/jaded    fuse.sshfs defaults,allow_other,_netdev,reconnect,IdentityFile=/root/.ssh/id_rsa 0 0
-```
-Obsidian.nvim points at `/mnt/elevated/MyDrive/Elevated Vault` (`~/.config/nvim/lua/plugins/tools/obsidian.lua`).
-
-> NOTE: `google-drive.md` also documents a Samba path for other VMs to reach the Drives. Samba was **RETIRED 2026-05-27** (smbd disabled on book5 — unused, `/root`-share security smell), so the CIFS mount route is no longer available; use SSHFS or the rclone mounts directly.
+Gone as of 2026-10-02 (verified): VM 101 has no `~/GoogleDrives/`, no `rclone-*` units, and the
+work account (`joshua@elevatedtrading.com`) ended 2026-09-30. The SSHFS re-mounts on both Proxmox
+nodes (`/mnt/elevated`, `/mnt/jaded`) still pointed at the pre-renumbering `192.168.2.126` and had
+failed on every boot; their `/etc/fstab` lines are commented out on [[tower]] and [[book5]]
+(backup `/etc/fstab.bak-2026-10-02`, empty mountpoint dirs left in place). Nothing was deleted —
+the Drives themselves were never stored here. Old layout + rclone settings: git history of this
+page, and `~/.claude/docs/homelab/google-drive.md`.
 
 ## Sources
 

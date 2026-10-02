@@ -7,6 +7,7 @@ related: [index]
 
 # homeLab wiki — log
 
+- **2026-10-02** — [[tower]] § Retired units + [[storage]] § Google Drive: four always-failing tower units retired (`check-vm-bridge.timer`, `virtiofsd-frigate`, `/mnt/elevated` + `/mnt/jaded` SSHFS mounts; same two fstab lines on [[book5]]). Disabled / commented out, nothing deleted. Tower C-state cap check-in at 2 d 10 h: cap active (POLL + C1 only), EDAC 0, pstore empty, flight recorder streaming to book5.
 - **2026-10-01** — [[vm101-ubuntu]] § Service inventory, Grist row: image is `gristlabs/grist:stable` (`latest` = nightly), "No authentication" mode, API reached from the Pocket with `grist-api` and a key held in 1Password (`op://Lab/Grist sandbox/credential`).
 
 - **2026-09-30** — [[vm101-ubuntu]] § Service inventory: three **sandbox** stacks added — Nextcloud `:8085`, Grist `:8484`, Immich `:2283` (`~/docker/{nextcloud,grist,immich}/`, test data only). At-a-glance corrected (24.04.4, 292 GB root). [[mullvad]] gains § Gotcha: "Connected" but no internet — networkd restarts (unattended-upgrades) wipe Mullvad's `ip rule`s; `mullvad reconnect -w` restores them, permanent drop-in still pending.
