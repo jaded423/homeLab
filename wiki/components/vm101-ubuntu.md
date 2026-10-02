@@ -140,15 +140,23 @@ Frigate's nginx (5000) can serve the page shell while the backend (5001) is wedg
 HA notification when it fires). If it fires often, root-cause the `plate_recognizer` →
 `/api/events/.../clip.mp4` export stall. Self-healing detail → [[watchdogs]].
 
-**Detector = OpenVINO on CPU, container pinned to 6 CPUs (`cpuset: "0-5"`, 2026-10-02).** OpenVINO
-sizes its thread pool to the CPUs it can see; with all 28 vCPUs visible it spun 28 threads at ~5.5
-cores for ~0.2 core of real work (SSDLite MobileNet, ~25 inferences/s). Pinned: detector ~1.2 cores,
-inference 7 → 10 ms, 0 skipped frames. **GPU detection is not possible on the M4000 with Frigate
-0.16+** (tested 0.17.1): the image's ONNX Runtime 1.22 / CUDA 12.5 has no kernels for Maxwell
-(`cudaErrorNoKernelImageForDevice`), and the TensorRT libraries are no longer shipped. The old
-"ran on GPU" era was the pre-0.16 TensorRT detector. The M4000 still does video decode. A GPU
-detector needs a newer card or a Coral/Hailo → [[gpu-passthrough]]. Config has a third camera,
-`tapo_doorbell` (`192.168.68.77`), which was unreachable on 2026-10-02.
+**Frigate is PINNED to `0.15.2-tensorrt` (2026-10-02) — do not move it to `stable`.** Detector =
+TensorRT on the M4000 (`yolov7-320`, engine built by `YOLO_MODELS=yolov7-320` into
+`config/model_cache/tensorrt/`, TensorRT 8.5.3): ~20 ms/inference, ~25% GPU, ~640 MB VRAM, container
+~1.4 cores. Why the pin: **Frigate 0.16+ cannot GPU-detect on a Maxwell card** (tested 0.17.1 — its
+ONNX Runtime 1.22 / CUDA 12.5 has no kernels for Maxwell, `cudaErrorNoKernelImageForDevice`, and the
+TensorRT libraries are gone from the image). On 0.16/0.17 detection ran OpenVINO-on-CPU at ~5.5 cores
+(28 threads spinning for ~0.2 core of work; `cpuset` is the fix if it ever goes back to CPU).
+Given up by going back: face recognition, built-in LPR, classification (all 0.16+).
+
+Way back to 0.17: `config/config.yaml.bak-2026-10-02-pre-0.15`, `docker-compose.yml.bak-2026-10-02-pre-0.15`,
+and the 0.17 database in `config/db-0.17-2026-10-02/`. 0.15 started on a **fresh database**, so
+recordings made before 2026-10-02 11:37 are still on the NFS pool under
+`/mnt/media-pool/frigate/recordings/` but are not in the UI and are **not covered by the 30-day
+retention** — delete the old date folders by hand once they stop mattering.
+
+Config has a third camera, `tapo_doorbell` (`192.168.68.77`, hardwired, drops often), unreachable
+on 2026-10-02.
 
 ```bash
 docker logs frigate -f
