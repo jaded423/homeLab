@@ -92,3 +92,10 @@ inferred from the block pattern, not measured — baseline 20 blocks at T+1.5h u
 `TODO.md`).
 
 Event/forensics detail → `../docs/changelog.md`.
+
+## [2026-10-02] add | [[proxmox-vm-migration-guide]] moved in from the global docs
+
+The 639-line Proxmox VM migration guide had lived in `~/.claude/docs/` since 2025-11, outside
+this wiki. Moved verbatim to `concepts/proxmox-vm-migration-guide.md` with `type: reference`
+frontmatter and an index row. Content not revised — its examples still use the pre-migration
+192.168.2.x subnet (the page says so at the top).

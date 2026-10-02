@@ -62,6 +62,7 @@ per-node docs in `~/.claude/docs/homelab/` were folded in here (2026-07-06).
 | [[vaultbot]] | Secret-broker design thought-experiment: attestation vs bearer-hash, device binding, LLM-as-approver landmine, floors/ceilings of the Mac-single-point-of-failure threat model. |
 | [[troubleshooting]] | Recurring problems + fixes + setup recipes not owned by one host. |
 | [[history]] | Origin, pre-migration 192.168.2.x topology (archaeology), hardware/budget, version history. |
+| [[proxmox-vm-migration-guide]] | Step-by-step guide for moving a VM between Proxmox nodes (written 2025-11 for laptop → Tower; examples use the old 192.168.2.x subnet). |
 
 ## Meta
 

@@ -1,5 +1,15 @@
 # HomeLab Project Changelog
 
+## 2026-10-02 — Proxmox VM migration guide moved into the wiki
+
+**What changed:**
+- `~/.claude/docs/proxmox-vm-migration-guide.md` → `wiki/concepts/proxmox-vm-migration-guide.md` (639 lines, body unchanged, typed frontmatter added, listed in `wiki/index.md`).
+
+**Why:**
+- Homelab knowledge lives in this repo's wiki; the guide was written into the global docs before the wiki existed and never moved.
+
+---
+
 ## 2026-10-01 — Grist sandbox: stable image, first-run setup, API access through 1Password
 
 **What changed:**
