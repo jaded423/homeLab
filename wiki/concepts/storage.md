@@ -85,11 +85,10 @@ work account (`joshua@elevatedtrading.com`) ended 2026-09-30. The SSHFS re-mount
 nodes (`/mnt/elevated`, `/mnt/jaded`) still pointed at the pre-renumbering `192.168.2.126` and had
 failed on every boot; their `/etc/fstab` lines and the empty mountpoint dirs are removed on
 [[tower]] and [[book5]]. No data was involved — the Drives themselves were never stored here. Old layout + rclone settings: git history of this
-page, and `~/.claude/docs/homelab/google-drive.md`.
+page (the old `~/.claude/docs/homelab/google-drive.md` no longer exists).
 
 ## Sources
 
 - `~/.claude/docs/homelab/media-server.md` (media layout, NFS export/mount, scan-and-move, qBit)
-- `~/.claude/docs/homelab/google-drive.md` (rclone mounts, systemd services, SSHFS)
 - `~/projects/homeLab/CLAUDE.md` lines 45–119 (Operational Current State — Mullvad exit, Samba retirement, 2.5G NIC)
 - Memory `project_vm101_media_layout` (2026-05-26 storage-tier mapping, `sdb` teardown, `.!qB` fix, seeding-FD gotcha)
