@@ -25,7 +25,7 @@ Plan and status: `~/.claude/plans/multi-verse.md` (until it retires).
 | Size | 2 vCPU, 4 GB RAM, ONE 64 GB disk on `media-pool-vm` (HDD pool — space over speed) |
 | Network | `vmbr1`, static 192.168.68.123/22, gateway .1, DNS pihole then 1.1.1.1 (set by cloud-init) |
 | Login | user `j` (home `/home/j`, zsh), key-only; keys: Pocket, phone proot, phone Termux |
-| ssh | `ssh multi-verse-local` (LAN / subnet route). Tailnet name `multi-verse` once logged in |
+| ssh | `ssh multi-verse` (tailnet 100.122.190.116, joined 2026-10-03) |
 | Its own key | `j@multi-verse` — registered on Gitea; GitHub pending |
 
 ## What runs on it
