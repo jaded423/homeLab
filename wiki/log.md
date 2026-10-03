@@ -99,3 +99,4 @@ The 639-line Proxmox VM migration guide had lived in `~/.claude/docs/` since 202
 this wiki. Moved verbatim to `concepts/proxmox-vm-migration-guide.md` with `type: reference`
 frontmatter and an index row. Content not revised — its examples still use the pre-migration
 192.168.2.x subnet (the page says so at the top).
+- 2026-10-03 — added [[vm123-multi-verse]] (new VM on tower); index row + tower row updated.

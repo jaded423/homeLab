@@ -26,9 +26,10 @@ per-node docs in `~/.claude/docs/homelab/` were folded in here (2026-07-06).
 | Page | Host | IP | Role |
 |---|---|---|---|
 | [[book5]] | `book5` | 192.168.68.250 | Proxmox node 1 (laptop). Hosts [[vm100-omarchy]]. Watchdogs, Homelable CT103, Twingate connector. |
-| [[tower]] | `tower` | 192.168.68.249 | Proxmox node 2. Hosts [[vm101-ubuntu]] + [[vm111-homeassistant]]. M4000 GPU, crash-instrumented, 2.5G vmbr1. |
+| [[tower]] | `tower` | 192.168.68.249 | Proxmox node 2. Hosts [[vm101-ubuntu]] + [[vm111-homeassistant]] + [[vm123-multi-verse]]. M4000 GPU, crash-instrumented, 2.5G vmbr1. |
 | [[vm100-omarchy]] | `omarchy` | 192.168.68.100 | VM 100 — Arch/Omarchy desktop. n8n, Sunshine game-stream. iGPU passthrough. |
 | [[vm101-ubuntu]] | `ubuntu` | 192.168.68.101 | VM 101 — media + services box. Plex/Jellyfin/Ollama/Frigate/qBit/steam-headless/whisper. Mullvad. |
+| [[vm123-multi-verse]] | `multi-verse` | 192.168.68.123 | VM 123 — second home for the Claude/brain knowledge base (Arch, all repos, drift timer). Peer of the Pocket. |
 | [[vm111-homeassistant]] | `ha` | 192.168.68.111 | VM 111 — Home Assistant OS. Hubspace + Frigate + MQTT. |
 | [[ct316-sermons]] | `sermons` | 192.168.68.116 (LAN; via pi-gw1 Caddy / ProxyJump book5) | CT 316 on book5 — sermon pages + audio (nginx), fronted by pi-gw1 as sermons.jadedviber.com. Moved off tower 2026-09-23. |
 | [[pihole]] | `pihole` | 192.168.68.248 | magic-pihole — network DNS + ad-block (Raspberry Pi). |
